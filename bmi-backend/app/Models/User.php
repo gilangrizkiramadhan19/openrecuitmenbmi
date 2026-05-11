@@ -6,27 +6,22 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Concerns\HasUuids; // Tambahkan ini
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Contracts\Auth\MustVerifyEmail;   // ← Tambahkan ini
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail  // ← Tambahkan implements
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuids; // Tambahkan HasUuids
+    use HasApiTokens, HasFactory, Notifiable, HasUuids;
 
-    // Beritahu Laravel tipe primary key adalah string (UUID)
     protected $keyType = 'string';
     public $incrementing = false;
-    public $timestamps = false;
 
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role',
+        'name', 'email', 'password', 'role',
     ];
 
     protected $hidden = [
-        'password',
-        'remember_token',
+        'password', 'remember_token',
     ];
 
     protected function casts(): array

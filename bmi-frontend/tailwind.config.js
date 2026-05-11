@@ -4,9 +4,10 @@ export default {
   theme: {
     extend: {
       colors: {
-        "bmi-navy": "#003366", // Biru Gelap Korporat
-        "bmi-blue": "#0056B3", // Biru Aksen Modern
-        "bmi-soft": "#F8FAFC", // Background abu-abu sangat muda
+        "bmi-navy": "#003366", // Deep Navy Blue - Professional Corporate
+        "bmi-blue": "#0056B3", // Ocean Blue - Fisheries & Maritime
+        "bmi-cyan": "#0EA5E9", // Soft Cyan - Active States & Analytics
+        "bmi-soft": "#F4F7FA", // Soft Gray Background
       },
       fontFamily: {
         sans: ["Inter", "Public Sans", "sans-serif"],
