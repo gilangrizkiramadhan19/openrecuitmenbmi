@@ -7,78 +7,73 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
           {/* Company Info */}
           <div>
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-bmi-navy font-bold text-lg">B</span>
-              </div>
-              <span className="text-xl font-bold">BMI</span>
-            </div>
+            <img src="/logo-bmi.png" alt="BMI Logo" className="h-12 w-auto mb-4" />
             <p className="text-slate-300 text-sm">
-              PT Bumi Menara Internusa - Leading Enterprise Recruitment Platform
+              PT Bumi Menara Internusa - Perusahaan pengolahan dan ekspor seafood terkemuka di Indonesia dengan standar internasional.
             </p>
           </div>
 
-          {/* Quick Links */}
+          {/* Tautan Cepat */}
           <div>
-            <h4 className="font-semibold mb-4 text-white">Quick Links</h4>
+            <h4 className="font-semibold mb-4 text-white">Tautan Cepat</h4>
             <ul className="space-y-2 text-sm text-slate-300">
               <li>
-                <a href="#" className="hover:text-white transition">
-                  Home
+                <a href="/" className="hover:text-white transition">
+                  Beranda
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition">
-                  Jobs
+                  Lowongan
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition">
-                  About Us
+                  Tentang Kami
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition">
-                  Contact
+                  Kontak
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Resources */}
+          {/* Sumber Daya */}
           <div>
-            <h4 className="font-semibold mb-4 text-white">Resources</h4>
+            <h4 className="font-semibold mb-4 text-white">Sumber Daya</h4>
             <ul className="space-y-2 text-sm text-slate-300">
               <li>
                 <a href="#" className="hover:text-white transition">
-                  FAQ
+                  Tanya Jawab
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition">
-                  Help Center
+                  Pusat Bantuan
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition">
-                  Privacy Policy
+                  Kebijakan Privasi
                 </a>
               </li>
               <li>
                 <a href="#" className="hover:text-white transition">
-                  Terms of Service
+                  Syarat Layanan
                 </a>
               </li>
             </ul>
           </div>
 
-          {/* Contact */}
+          {/* Hubungi Kami */}
           <div>
-            <h4 className="font-semibold mb-4 text-white">Contact Us</h4>
+            <h4 className="font-semibold mb-4 text-white">Hubungi Kami</h4>
             <ul className="space-y-3 text-sm text-slate-300">
               <li className="flex items-start gap-2">
                 <MapPin size={16} className="mt-1 flex-shrink-0" />
-                <span>Jakarta, Indonesia</span>
+                <span>Jl. Industri, Bekasi, Jawa Barat, Indonesia</span>
               </li>
               <li className="flex items-start gap-2">
                 <Phone size={16} className="mt-1 flex-shrink-0" />
@@ -86,7 +81,7 @@ export default function Footer() {
               </li>
               <li className="flex items-start gap-2">
                 <Mail size={16} className="mt-1 flex-shrink-0" />
-                <span>hr@bmi.co.id</span>
+                <span>recruitment@bmi.co.id</span>
               </li>
             </ul>
           </div>
@@ -95,7 +90,7 @@ export default function Footer() {
         {/* Divider */}
         <div className="border-t border-white/20 pt-8">
           <p className="text-center text-sm text-slate-300">
-            © 2024 PT Bumi Menara Internusa. All rights reserved.
+            © 2024 PT Bumi Menara Internusa. Semua hak dilindungi.
           </p>
         </div>
       </div>

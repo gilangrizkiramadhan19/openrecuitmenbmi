@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, User, Phone } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Phone, AlertCircle, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import Button from '../../components/Button';
 
@@ -11,31 +12,62 @@ export default function RegisterPage() {
     phone: '',
     password: '',
     confirmPassword: '',
+    agreeTerms: false,
   });
+
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
-  const [agreeTerms, setAgreeTerms] = useState(false);
+  const [success, setSuccess] = useState(false);
   const navigate = useNavigate();
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value,
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.fullName.trim()) {
+      newErrors.fullName = 'Nama lengkap diperlukan';
+    }
+    if (!formData.email) {
+      newErrors.email = 'Email diperlukan';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Email tidak valid';
+    }
+    if (!formData.phone) {
+      newErrors.phone = 'Nomor telepon diperlukan';
+    }
+    if (!formData.password) {
+      newErrors.password = 'Kata sandi diperlukan';
+    } else if (formData.password.length < 8) {
+      newErrors.password = 'Kata sandi minimal 8 karakter';
+    }
+    if (!formData.confirmPassword) {
+      newErrors.confirmPassword = 'Konfirmasi kata sandi diperlukan';
+    } else if (formData.password !== formData.confirmPassword) {
+      newErrors.confirmPassword = 'Kata sandi tidak cocok';
+    }
+    if (!formData.agreeTerms) {
+      newErrors.agreeTerms = 'Anda harus menyetujui syarat dan ketentuan';
+    }
+
+    return newErrors;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const newErrors = {};
-
-    if (!formData.fullName) newErrors.fullName = 'Full name is required';
-    if (!formData.email) newErrors.email = 'Email is required';
-    if (!formData.phone) newErrors.phone = 'Phone number is required';
-    if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password !== formData.confirmPassword)
-      newErrors.confirmPassword = 'Passwords do not match';
-    if (!agreeTerms) newErrors.terms = 'Please agree to terms and conditions';
+    const newErrors = validateForm();
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -45,261 +77,358 @@ export default function RegisterPage() {
     setLoading(true);
     // TODO: Implement actual registration API call
     setTimeout(() => {
-      navigate('/dashboard/applicant');
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
       setLoading(false);
     }, 1000);
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: 'easeOut',
+      },
+    },
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 10 },
+    visible: (custom) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: custom * 0.1, duration: 0.6 },
+    }),
   };
 
   return (
     <div className="min-h-screen bg-bmi-soft">
       <Navbar showAuth={false} />
 
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md">
-          {/* Card */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
-            {/* Header */}
-            <div className="bg-gradient-to-r from-bmi-navy to-bmi-blue p-8 text-white">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                  <span className="text-bmi-navy font-bold text-xl">B</span>
-                </div>
-                <span className="text-xl font-bold">BMI</span>
-              </div>
-              <h1 className="text-2xl font-bold mb-2">Get Started</h1>
-              <p className="text-slate-200">Create your account to apply for jobs</p>
-            </div>
-
-            {/* Content */}
-            <div className="p-8">
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Full Name */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Full Name
-                  </label>
-                  <div className="relative">
-                    <User
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type="text"
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bmi-blue transition ${
-                        errors.fullName
-                          ? 'border-red-500'
-                          : 'border-slate-200 focus:border-transparent'
-                      }`}
-                      placeholder="John Doe"
-                    />
-                  </div>
-                  {errors.fullName && (
-                    <p className="text-red-600 text-xs mt-1">{errors.fullName}</p>
-                  )}
-                </div>
-
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Email
-                  </label>
-                  <div className="relative">
-                    <Mail
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bmi-blue transition ${
-                        errors.email
-                          ? 'border-red-500'
-                          : 'border-slate-200 focus:border-transparent'
-                      }`}
-                      placeholder="name@example.com"
-                    />
-                  </div>
-                  {errors.email && (
-                    <p className="text-red-600 text-xs mt-1">{errors.email}</p>
-                  )}
-                </div>
-
-                {/* Phone */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Phone Number
-                  </label>
-                  <div className="relative">
-                    <Phone
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type="tel"
-                      name="phone"
-                      value={formData.phone}
-                      onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bmi-blue transition ${
-                        errors.phone
-                          ? 'border-red-500'
-                          : 'border-slate-200 focus:border-transparent'
-                      }`}
-                      placeholder="+62 812 3456 7890"
-                    />
-                  </div>
-                  {errors.phone && (
-                    <p className="text-red-600 text-xs mt-1">{errors.phone}</p>
-                  )}
-                </div>
-
-                {/* Password */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <Lock
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      name="password"
-                      value={formData.password}
-                      onChange={handleChange}
-                      className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bmi-blue transition ${
-                        errors.password
-                          ? 'border-red-500'
-                          : 'border-slate-200 focus:border-transparent'
-                      }`}
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showPassword ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
-                      )}
-                    </button>
-                  </div>
-                  {errors.password && (
-                    <p className="text-red-600 text-xs mt-1">{errors.password}</p>
-                  )}
-                </div>
-
-                {/* Confirm Password */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Confirm Password
-                  </label>
-                  <div className="relative">
-                    <Lock
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
-                    <input
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      name="confirmPassword"
-                      value={formData.confirmPassword}
-                      onChange={handleChange}
-                      className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bmi-blue transition ${
-                        errors.confirmPassword
-                          ? 'border-red-500'
-                          : 'border-slate-200 focus:border-transparent'
-                      }`}
-                      placeholder="••••••••"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff size={18} />
-                      ) : (
-                        <Eye size={18} />
-                      )}
-                    </button>
-                  </div>
-                  {errors.confirmPassword && (
-                    <p className="text-red-600 text-xs mt-1">
-                      {errors.confirmPassword}
-                    </p>
-                  )}
-                </div>
-
-                {/* Terms & Conditions */}
-                <div className="flex items-start gap-2 pt-2">
-                  <input
-                    type="checkbox"
-                    id="terms"
-                    checked={agreeTerms}
-                    onChange={(e) => {
-                      setAgreeTerms(e.target.checked);
-                      if (errors.terms)
-                        setErrors((prev) => ({ ...prev, terms: '' }));
-                    }}
-                    className="w-4 h-4 rounded border-slate-300 mt-0.5"
-                  />
-                  <label htmlFor="terms" className="text-xs text-slate-600">
-                    I agree to the{' '}
-                    <a href="#" className="text-bmi-blue hover:underline">
-                      Terms of Service
-                    </a>{' '}
-                    and{' '}
-                    <a href="#" className="text-bmi-blue hover:underline">
-                      Privacy Policy
-                    </a>
-                  </label>
-                </div>
-                {errors.terms && (
-                  <p className="text-red-600 text-xs">{errors.terms}</p>
-                )}
-
-                {/* Submit Button */}
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={loading}
-                  className="w-full mt-6"
-                >
-                  {loading ? 'Creating account...' : 'Create Account'}
-                </Button>
-              </form>
-
-              {/* Divider */}
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-slate-600">
-                    Already have an account?
-                  </span>
-                </div>
-              </div>
-
-              {/* Sign In Link */}
-              <Link to="/login">
-                <Button variant="outline" size="lg" className="w-full">
-                  Sign In
-                </Button>
-              </Link>
-            </div>
-          </div>
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-bmi-cyan/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-bmi-blue/5 rounded-full blur-3xl" />
         </div>
+
+        <motion.div
+          className="w-full max-w-2xl"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
+          {/* Card */}
+          <div className="bg-white rounded-3xl shadow-premium border border-slate-200/50 overflow-hidden backdrop-blur-xl">
+            {/* Header */}
+            <div className="bg-gradient-to-br from-bmi-navy via-bmi-navy to-bmi-blue p-8 text-white">
+              <motion.div
+                className="flex items-center gap-3 mb-6"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+              >
+                <img src="/logo-bmi.png" alt="BMI Logo" className="h-10 w-auto" />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <h1 className="text-3xl font-bold mb-2">Daftar Akun Baru</h1>
+                <p className="text-white/80 text-sm">Mulai aplikasi karir Anda hari ini</p>
+              </motion.div>
+            </div>
+
+            {/* Form */}
+            {!success ? (
+              <div className="p-8 md:p-10">
+                <form onSubmit={handleSubmit} className="space-y-6">
+                  {/* Full Name */}
+                  <motion.div
+                    custom={0}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <label className="block text-sm font-semibold text-bmi-navy mb-3">
+                      Nama Lengkap
+                    </label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                      <input
+                        type="text"
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleChange}
+                        placeholder="Nama lengkap Anda"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors text-slate-900 placeholder-slate-400"
+                      />
+                    </div>
+                    {errors.fullName && (
+                      <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+                        <AlertCircle size={16} />
+                        {errors.fullName}
+                      </div>
+                    )}
+                  </motion.div>
+
+                  {/* Email */}
+                  <motion.div
+                    custom={1}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <label className="block text-sm font-semibold text-bmi-navy mb-3">
+                      Email Address
+                    </label>
+                    <div className="relative">
+                      <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder="your@email.com"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors text-slate-900 placeholder-slate-400"
+                      />
+                    </div>
+                    {errors.email && (
+                      <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+                        <AlertCircle size={16} />
+                        {errors.email}
+                      </div>
+                    )}
+                  </motion.div>
+
+                  {/* Phone */}
+                  <motion.div
+                    custom={2}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <label className="block text-sm font-semibold text-bmi-navy mb-3">
+                      Nomor Telepon
+                    </label>
+                    <div className="relative">
+                      <Phone className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        placeholder="+62 812 3456 7890"
+                        className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors text-slate-900 placeholder-slate-400"
+                      />
+                    </div>
+                    {errors.phone && (
+                      <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+                        <AlertCircle size={16} />
+                        {errors.phone}
+                      </div>
+                    )}
+                  </motion.div>
+
+                  {/* Password */}
+                  <motion.div
+                    custom={3}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <label className="block text-sm font-semibold text-bmi-navy mb-3">
+                      Kata Sandi
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        name="password"
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        className="w-full pl-12 pr-12 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors text-slate-900 placeholder-slate-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-bmi-navy transition"
+                      >
+                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+                        <AlertCircle size={16} />
+                        {errors.password}
+                      </div>
+                    )}
+                  </motion.div>
+
+                  {/* Confirm Password */}
+                  <motion.div
+                    custom={4}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <label className="block text-sm font-semibold text-bmi-navy mb-3">
+                      Konfirmasi Kata Sandi
+                    </label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
+                      <input
+                        type={showConfirmPassword ? 'text' : 'password'}
+                        name="confirmPassword"
+                        value={formData.confirmPassword}
+                        onChange={handleChange}
+                        placeholder="••••••••"
+                        className="w-full pl-12 pr-12 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors text-slate-900 placeholder-slate-400"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-bmi-navy transition"
+                      >
+                        {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+                        <AlertCircle size={16} />
+                        {errors.confirmPassword}
+                      </div>
+                    )}
+                  </motion.div>
+
+                  {/* Terms & Conditions */}
+                  <motion.div
+                    custom={5}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <label className="flex items-start gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        name="agreeTerms"
+                        checked={formData.agreeTerms}
+                        onChange={handleChange}
+                        className="w-5 h-5 rounded border-2 border-slate-300 text-bmi-navy focus:ring-2 focus:ring-bmi-cyan mt-1 flex-shrink-0"
+                      />
+                      <span className="text-slate-700 text-sm">
+                        Saya setuju dengan{' '}
+                        <a href="#" className="text-bmi-blue font-semibold hover:underline">
+                          Syarat Layanan
+                        </a>
+                        {' dan '}
+                        <a href="#" className="text-bmi-blue font-semibold hover:underline">
+                          Kebijakan Privasi
+                        </a>
+                      </span>
+                    </label>
+                    {errors.agreeTerms && (
+                      <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+                        <AlertCircle size={16} />
+                        {errors.agreeTerms}
+                      </div>
+                    )}
+                  </motion.div>
+
+                  {/* Submit Button */}
+                  <motion.div
+                    custom={6}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                  >
+                    <Button
+                      type="submit"
+                      size="lg"
+                      disabled={loading}
+                      className="w-full justify-center"
+                    >
+                      {loading ? 'Mendaftarkan...' : 'Buat Akun'}
+                    </Button>
+                  </motion.div>
+
+                  {/* Sign In Link */}
+                  <motion.div
+                    custom={7}
+                    variants={itemVariants}
+                    initial="hidden"
+                    animate="visible"
+                    className="text-center text-sm text-slate-700"
+                  >
+                    Sudah memiliki akun?{' '}
+                    <Link to="/login" className="text-bmi-blue font-semibold hover:text-bmi-navy transition">
+                      Masuk di sini
+                    </Link>
+                  </motion.div>
+                </form>
+              </div>
+            ) : (
+              /* Success Message */
+              <div className="p-8 md:p-10 flex flex-col items-center justify-center min-h-96">
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5, type: 'spring', stiffness: 200 }}
+                  className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6"
+                >
+                  <Check size={32} className="text-green-600" />
+                </motion.div>
+                <motion.h2
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3, duration: 0.6 }}
+                  className="text-2xl font-bold text-bmi-navy mb-2 text-center"
+                >
+                  Pendaftaran Berhasil!
+                </motion.h2>
+                <motion.p
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                  className="text-slate-700 text-center mb-6"
+                >
+                  Silakan login dengan email dan kata sandi Anda untuk memulai aplikasi karir.
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                  className="w-full max-w-xs"
+                >
+                  <Button
+                    size="lg"
+                    className="w-full justify-center"
+                    onClick={() => navigate('/login')}
+                  >
+                    Lanjut ke Login
+                  </Button>
+                </motion.div>
+              </div>
+            )}
+
+            {/* Footer */}
+            {!success && (
+              <div className="bg-bmi-soft/50 px-8 py-4 border-t border-slate-100">
+                <p className="text-xs text-slate-600 text-center">
+                  Data Anda dilindungi dengan enkripsi tingkat enterprise
+                </p>
+              </div>
+            )}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

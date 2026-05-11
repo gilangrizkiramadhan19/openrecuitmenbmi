@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from 'lucide-react';
+import { motion } from 'framer-motion';
 import Navbar from '../../components/Navbar';
 import Button from '../../components/Button';
 
@@ -8,7 +9,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [role, setRole] = useState('applicant');
+  const [rememberMe, setRememberMe] = useState(false);
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
@@ -17,8 +18,9 @@ export default function LoginPage() {
     e.preventDefault();
     const newErrors = {};
 
-    if (!email) newErrors.email = 'Email is required';
-    if (!password) newErrors.password = 'Password is required';
+    if (!email) newErrors.email = 'Email diperlukan';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Email tidak valid';
+    if (!password) newErrors.password = 'Kata sandi diperlukan';
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -28,74 +30,77 @@ export default function LoginPage() {
     setLoading(true);
     // TODO: Implement actual login API call
     setTimeout(() => {
-      if (role === 'applicant') {
-        navigate('/dashboard/applicant');
-      } else {
-        navigate('/dashboard/hrd');
-      }
+      navigate('/dashboard/applicant');
       setLoading(false);
     }, 1000);
+  };
+
+  const containerVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.8,
+        ease: 'easeOut',
+      },
+    },
   };
 
   return (
     <div className="min-h-screen bg-bmi-soft">
       <Navbar showAuth={false} />
 
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)]">
-        <div className="w-full max-w-md">
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 min-h-[calc(100vh-64px)] relative overflow-hidden">
+        {/* Background Elements */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-20 right-10 w-72 h-72 bg-bmi-cyan/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-10 w-96 h-96 bg-bmi-blue/5 rounded-full blur-3xl" />
+        </div>
+
+        <motion.div
+          className="w-full max-w-md"
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+        >
           {/* Card */}
-          <div className="bg-white rounded-2xl shadow-lg border border-slate-100 overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-premium border border-slate-200/50 overflow-hidden backdrop-blur-xl">
             {/* Header */}
-            <div className="bg-gradient-to-r from-bmi-navy to-bmi-blue p-8 text-white">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center">
-                  <span className="text-bmi-navy font-bold text-xl">B</span>
-                </div>
-                <span className="text-xl font-bold">BMI</span>
-              </div>
-              <h1 className="text-2xl font-bold mb-2">Welcome Back</h1>
-              <p className="text-slate-200">Sign in to your account</p>
+            <div className="bg-gradient-to-br from-bmi-navy via-bmi-navy to-bmi-blue p-8 text-white">
+              <motion.div
+                className="flex items-center gap-3 mb-6"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.2, duration: 0.6 }}
+              >
+                <img src="/logo-bmi.png" alt="BMI Logo" className="h-10 w-auto" />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3, duration: 0.6 }}
+              >
+                <h1 className="text-3xl font-bold mb-2">Masuk ke Akun Anda</h1>
+                <p className="text-white/80 text-sm">Kelola aplikasi karir Anda dengan mudah</p>
+              </motion.div>
             </div>
 
-            {/* Content */}
-            <div className="p-8">
-              {/* Role Selector */}
-              <div className="mb-8">
-                <label className="block text-sm font-semibold text-slate-700 mb-4">
-                  Login as
-                </label>
-                <div className="flex gap-3">
-                  {[
-                    { value: 'applicant', label: 'Applicant' },
-                    { value: 'hrd', label: 'HRD/Admin' },
-                  ].map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setRole(opt.value)}
-                      className={`flex-1 py-3 rounded-lg font-medium transition ${
-                        role === opt.value
-                          ? 'bg-bmi-navy text-white'
-                          : 'bg-bmi-soft text-slate-700 hover:bg-slate-200'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-5">
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Email
+            {/* Form */}
+            <div className="p-8 md:p-10">
+              <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Email Field */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4, duration: 0.6 }}
+                >
+                  <label className="block text-sm font-semibold text-bmi-navy mb-3">
+                    Email Address
                   </label>
                   <div className="relative">
-                    <Mail
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
+                    <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
                     <input
                       type="email"
                       value={email}
@@ -103,106 +108,136 @@ export default function LoginPage() {
                         setEmail(e.target.value);
                         if (errors.email) setErrors({ ...errors, email: '' });
                       }}
-                      className={`w-full pl-10 pr-4 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bmi-blue transition ${
-                        errors.email
-                          ? 'border-red-500'
-                          : 'border-slate-200 focus:border-transparent'
-                      }`}
-                      placeholder="name@example.com"
+                      placeholder="your@email.com"
+                      className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors text-slate-900 placeholder-slate-400"
                     />
                   </div>
                   {errors.email && (
-                    <p className="text-red-600 text-xs mt-1">{errors.email}</p>
+                    <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+                      <AlertCircle size={16} />
+                      {errors.email}
+                    </div>
                   )}
-                </div>
+                </motion.div>
 
-                {/* Password */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-2">
-                    Password
+                {/* Password Field */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5, duration: 0.6 }}
+                >
+                  <label className="block text-sm font-semibold text-bmi-navy mb-3">
+                    Kata Sandi
                   </label>
                   <div className="relative">
-                    <Lock
-                      size={18}
-                      className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"
-                    />
+                    <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
                     <input
                       type={showPassword ? 'text' : 'password'}
                       value={password}
                       onChange={(e) => {
                         setPassword(e.target.value);
-                        if (errors.password)
-                          setErrors({ ...errors, password: '' });
+                        if (errors.password) setErrors({ ...errors, password: '' });
                       }}
-                      className={`w-full pl-10 pr-10 py-2.5 border rounded-lg focus:outline-none focus:ring-2 focus:ring-bmi-blue transition ${
-                        errors.password
-                          ? 'border-red-500'
-                          : 'border-slate-200 focus:border-transparent'
-                      }`}
                       placeholder="••••••••"
+                      className="w-full pl-12 pr-12 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors text-slate-900 placeholder-slate-400"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                      className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-bmi-navy transition"
                     >
-                      {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                   </div>
                   {errors.password && (
-                    <p className="text-red-600 text-xs mt-1">{errors.password}</p>
+                    <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
+                      <AlertCircle size={16} />
+                      {errors.password}
+                    </div>
                   )}
-                </div>
+                </motion.div>
 
-                {/* Remember Me & Forgot */}
-                <div className="flex items-center justify-between">
-                  <label className="flex items-center gap-2 text-sm text-slate-700">
+                {/* Remember Me & Forgot Password */}
+                <motion.div
+                  className="flex items-center justify-between text-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.6, duration: 0.6 }}
+                >
+                  <label className="flex items-center gap-2 cursor-pointer">
                     <input
                       type="checkbox"
-                      className="w-4 h-4 rounded border-slate-300"
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded border-2 border-slate-300 text-bmi-navy focus:ring-2 focus:ring-bmi-cyan"
                     />
-                    Remember me
+                    <span className="text-slate-700">Ingat saya</span>
                   </label>
-                  <a
-                    href="#"
-                    className="text-sm text-bmi-blue hover:text-bmi-navy font-medium"
-                  >
-                    Forgot password?
+                  <a href="#" className="text-bmi-blue hover:text-bmi-navy font-semibold transition">
+                    Lupa kata sandi?
                   </a>
-                </div>
+                </motion.div>
 
                 {/* Submit Button */}
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={loading}
-                  className="w-full"
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7, duration: 0.6 }}
                 >
-                  {loading ? 'Signing in...' : 'Sign In'}
-                </Button>
+                  <Button
+                    type="submit"
+                    size="lg"
+                    disabled={loading}
+                    className="w-full justify-center"
+                  >
+                    {loading ? 'Memproses...' : 'Masuk'}
+                  </Button>
+                </motion.div>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-slate-600">atau</span>
+                  </div>
+                </div>
+
+                {/* Sign Up Link */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.8, duration: 0.6 }}
+                  className="text-center text-sm text-slate-700"
+                >
+                  Belum memiliki akun?{' '}
+                  <Link to="/register" className="text-bmi-blue font-semibold hover:text-bmi-navy transition">
+                    Daftar sekarang
+                  </Link>
+                </motion.div>
               </form>
+            </div>
 
-              {/* Divider */}
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-slate-600">
-                    Don&apos;t have an account?
-                  </span>
-                </div>
-              </div>
-
-              {/* Sign Up Link */}
-              <Link to="/register">
-                <Button variant="outline" size="lg" className="w-full">
-                  Create New Account
-                </Button>
-              </Link>
+            {/* Footer */}
+            <div className="bg-bmi-soft/50 px-8 py-4 border-t border-slate-100">
+              <p className="text-xs text-slate-600 text-center">
+                Dengan masuk, Anda menyetujui <a href="#" className="text-bmi-blue hover:underline">Kebijakan Privasi</a> dan{' '}
+                <a href="#" className="text-bmi-blue hover:underline">Syarat Layanan</a> kami.
+              </p>
             </div>
           </div>
-        </div>
+
+          {/* Additional Info */}
+          <motion.div
+            className="mt-8 text-center text-slate-600 text-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.9, duration: 0.6 }}
+          >
+            <p>Akses sebagai HRD? <a href="#" className="text-bmi-navy font-semibold hover:text-bmi-blue transition">Login HRD</a></p>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
