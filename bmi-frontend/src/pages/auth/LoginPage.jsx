@@ -1,55 +1,61 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Mail, Lock, AlertCircle, Briefcase, Users, TrendingUp, Award } from 'lucide-react';
+import { Mail, Lock, ArrowRight, Briefcase, Users, TrendingUp, Award, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
 import Navbar from '../../components/Navbar';
 import Button from '../../components/Button';
+import InputField from '../../components/forms/InputField';
+import api from '../../axios';
+
+const schema = yup.object().shape({
+  email: yup.string().email('Format email tidak valid').required('Email wajib diisi'),
+  password: yup.string().required('Kata sandi wajib diisi'),
+});
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [rememberMe, setRememberMe] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = {};
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: yupResolver(schema),
+    mode: 'onTouched'
+  });
 
-    if (!email) newErrors.email = 'Email diperlukan';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Email tidak valid';
-    if (!password) newErrors.password = 'Kata sandi diperlukan';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
+  const onSubmit = async (data) => {
     setLoading(true);
-    setTimeout(() => {
+    setServerError('');
+    try {
+      const response = await api.post('/login', data);
+      // Store token
+      localStorage.setItem('token', response.data.token);
+      if (response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+      
+      // Redirect to applicant dashboard (interceptor handles further redirects if needed)
       navigate('/dashboard/applicant');
+    } catch (error) {
+      setServerError(
+        error.response?.data?.message || 'Email atau kata sandi salah. Silakan coba lagi.'
+      );
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const containerVariants = {
     hidden: { opacity: 0, y: 50 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: { duration: 0.8, ease: 'easeOut' },
-    },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: (custom) => ({
-      opacity: 1,
-      y: 0,
-      transition: { delay: custom * 0.1, duration: 0.6 },
-    }),
+    visible: (custom) => ({ opacity: 1, y: 0, transition: { delay: custom * 0.1, duration: 0.6 } }),
   };
 
   const features = [
@@ -64,7 +70,7 @@ export default function LoginPage() {
       <Navbar showAuth={false} />
 
       <div className="relative min-h-[calc(100vh-64px)] py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Background Wave Elements */}
+        {/* Background Wave */}
         <div className="absolute inset-0 -z-10">
           <svg className="absolute top-0 left-0 w-full opacity-10" viewBox="0 0 1440 320" preserveAspectRatio="none">
             <path fill="currentColor" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,144C960,149,1056,139,1152,138.7C1248,139,1344,149,1392,154.7L1440,160L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" />
@@ -74,49 +80,15 @@ export default function LoginPage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
             {/* Left Content */}
-            <motion.div
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-              className="text-white z-10"
-            >
-              <motion.div
-                custom={0}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-                className="flex items-center gap-3 mb-6"
-              >
-                <img src="/logo-bmi.png" alt="BMI Logo" className="h-12 w-auto" />
-              </motion.div>
-
-              <motion.h1
-                custom={1}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-                className="text-4xl lg:text-5xl font-bold mb-4 leading-tight"
-              >
+            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="text-white z-10">
+              <motion.img custom={0} variants={itemVariants} src="/logo-bmi.png" alt="BMI Logo" className="h-12 w-auto mb-6" />
+              <motion.h1 custom={1} variants={itemVariants} className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
                 Mulai Karir Impian Anda
               </motion.h1>
-
-              <motion.p
-                custom={2}
-                variants={itemVariants}
-                initial="hidden"
-                animate="visible"
-                className="text-white/80 text-lg mb-8 leading-relaxed"
-              >
-                Bergabunglah dengan ribuan profesional yang telah menemukan peluang karir terbaik mereka bersama PT Bumi Menara Internusa. Jelajahi lowongan pekerjaan di industri seafood dan ekspor terkemuka Indonesia.
+              <motion.p custom={2} variants={itemVariants} className="text-white/80 text-lg mb-8 leading-relaxed">
+                Bergabunglah dengan ribuan profesional yang telah menemukan peluang karir terbaik mereka bersama PT Bumi Menara Internusa.
               </motion.p>
-
-              {/* Stats */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.6, duration: 0.8 }}
-                className="grid grid-cols-2 gap-4"
-              >
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="grid grid-cols-2 gap-4">
                 {features.map((feature, idx) => {
                   const Icon = feature.icon;
                   return (
@@ -131,186 +103,71 @@ export default function LoginPage() {
             </motion.div>
 
             {/* Right - Login Card */}
-            <motion.div
-              className="lg:sticky lg:top-1/2 lg:-translate-y-1/2"
-              variants={containerVariants}
-              initial="hidden"
-              animate="visible"
-            >
-              <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-                {/* Card Header */}
-                <div className="bg-gradient-to-r from-bmi-navy to-bmi-blue p-8 text-white">
-                  <motion.h2
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
-                    className="text-2xl font-bold"
-                  >
-                    Masuk ke Akun
-                  </motion.h2>
-                  <motion.p
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: 0.5, duration: 0.6 }}
-                    className="text-white/80 text-sm mt-2"
-                  >
-                    Gunakan email dan kata sandi Anda
-                  </motion.p>
+            <motion.div className="lg:sticky lg:top-1/2 lg:-translate-y-1/2" variants={containerVariants} initial="hidden" animate="visible">
+              <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
+                <div className="bg-gradient-to-r from-bmi-navy to-bmi-blue p-8 text-white relative">
+                  <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
+                  <h2 className="text-3xl font-bold relative z-10">Masuk ke Akun</h2>
+                  <p className="text-white/80 text-sm mt-2 relative z-10">Selamat datang kembali! Silakan masukkan email dan sandi.</p>
                 </div>
 
-                {/* Form */}
                 <div className="p-8">
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    {/* Email Field */}
-                    <motion.div
-                      custom={1}
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      <label className="block text-sm font-semibold text-bmi-navy mb-3">
-                        Email
-                      </label>
-                      <div className="relative">
-                        <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
-                        <input
-                          type="email"
-                          value={email}
-                          onChange={(e) => {
-                            setEmail(e.target.value);
-                            if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
-                          }}
-                          placeholder="nama@email.com"
-                          className="w-full pl-12 pr-4 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors"
-                        />
-                      </div>
-                      {errors.email && (
-                        <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
-                          <AlertCircle size={16} />
-                          {errors.email}
-                        </div>
-                      )}
-                    </motion.div>
+                  {serverError && (
+                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium flex items-center gap-2">
+                      <AlertCircle size={18} />
+                      {serverError}
+                    </div>
+                  )}
 
-                    {/* Password Field */}
-                    <motion.div
-                      custom={2}
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      <label className="block text-sm font-semibold text-bmi-navy mb-3">
-                        Kata Sandi
-                      </label>
-                      <div className="relative">
-                        <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
-                        <input
-                          type={showPassword ? 'text' : 'password'}
-                          value={password}
-                          onChange={(e) => {
-                            setPassword(e.target.value);
-                            if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
-                          }}
-                          placeholder="••••••••"
-                          className="w-full pl-12 pr-12 py-3 border-2 border-slate-200 rounded-lg focus:border-bmi-blue focus:outline-none transition-colors"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-bmi-navy"
-                        >
-                          {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                        </button>
-                      </div>
-                      {errors.password && (
-                        <div className="flex items-center gap-2 mt-2 text-red-600 text-sm">
-                          <AlertCircle size={16} />
-                          {errors.password}
-                        </div>
-                      )}
-                    </motion.div>
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                    <InputField
+                      label="Alamat Email"
+                      icon={Mail}
+                      type="email"
+                      placeholder="nama@email.com"
+                      {...register('email')}
+                      error={errors.email?.message}
+                      required
+                    />
+                    
+                    <InputField
+                      label="Kata Sandi"
+                      icon={Lock}
+                      type="password"
+                      placeholder="••••••••"
+                      {...register('password')}
+                      error={errors.password?.message}
+                      required
+                    />
 
-                    {/* Remember Me & Forgot Password */}
-                    <motion.div
-                      custom={3}
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                      className="flex items-center justify-between"
-                    >
+                    <div className="flex items-center justify-between pt-2">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className="w-4 h-4 rounded border-slate-300"
-                        />
-                        <span className="text-sm text-slate-700">Ingat saya</span>
+                        <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-bmi-navy focus:ring-bmi-navy" />
+                        <span className="text-sm text-slate-700 font-medium">Ingat saya</span>
                       </label>
-                      <a href="#" className="text-sm text-bmi-blue hover:text-bmi-navy font-semibold">
+                      <a href="#" className="text-sm text-bmi-blue hover:text-bmi-navy font-bold transition-colors">
                         Lupa kata sandi?
                       </a>
-                    </motion.div>
+                    </div>
 
-                    {/* Login Button */}
-                    <motion.div
-                      custom={4}
-                      variants={itemVariants}
-                      initial="hidden"
-                      animate="visible"
-                    >
-                      <Button
-                        type="submit"
-                        size="lg"
-                        disabled={loading}
-                        className="w-full justify-center bg-gradient-to-r from-bmi-navy to-bmi-blue"
-                      >
-                        {loading ? 'Sedang Masuk...' : 'Masuk'}
+                    <div className="pt-4">
+                      <Button type="submit" size="lg" disabled={loading} className="w-full justify-center shadow-lg shadow-bmi-blue/20">
+                        {loading ? 'Sedang Memeriksa...' : 'Masuk Sekarang'}
                       </Button>
-                    </motion.div>
+                    </div>
                   </form>
 
-                  {/* Divider */}
-                  <motion.div
-                    custom={5}
-                    variants={itemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="relative my-6"
-                  >
-                    <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-200" />
-                    </div>
-                    <div className="relative flex justify-center">
-                      <span className="px-2 bg-white text-slate-600 text-sm">atau</span>
-                    </div>
-                  </motion.div>
+                  <div className="relative my-8">
+                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
+                    <div className="relative flex justify-center"><span className="px-4 bg-white text-slate-500 text-sm font-medium">Atau</span></div>
+                  </div>
 
-                  {/* Register Link */}
-                  <motion.div
-                    custom={6}
-                    variants={itemVariants}
-                    initial="hidden"
-                    animate="visible"
-                    className="text-center text-sm text-slate-700"
-                  >
+                  <p className="text-center text-sm text-slate-600 font-medium">
                     Belum memiliki akun?{' '}
-                    <Link to="/register" className="text-bmi-blue font-semibold hover:text-bmi-navy transition">
-                      Daftar sekarang
+                    <Link to="/register" className="text-bmi-blue font-bold hover:text-bmi-navy transition-colors">
+                      Daftar Karir
                     </Link>
-                  </motion.div>
-                </div>
-
-                {/* Footer with Career Search Button */}
-                <div className="bg-bmi-soft/50 px-8 py-4 border-t border-slate-100">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full justify-center text-bmi-blue border-bmi-blue hover:bg-bmi-cyan/10"
-                    onClick={() => navigate('/jobs')}
-                  >
-                    Cari Lowongan Karir
-                  </Button>
+                  </p>
                 </div>
               </div>
             </motion.div>

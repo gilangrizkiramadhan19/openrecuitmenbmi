@@ -1,0 +1,84 @@
+[
+  {
+    "city": "Bandar Lampung",
+    "districts": [
+      {
+        "district": "Tanjung Karang Pusat",
+        "sub_districts": [
+          "Durian Payung",
+          "Gotong Royong",
+          "Kaliawi",
+          "Kelapa Tiga",
+          "Palapa",
+          "Pasir Gintung"
+        ]
+      },
+      {
+        "district": "Kedaton",
+        "sub_districts": [
+          "Kedaton",
+          "Penengahan",
+          "Sidodadi",
+          "Sukamenanti",
+          "Surabaya"
+        ]
+      },
+      {
+        "district": "Rajabasa",
+        "sub_districts": [
+          "Rajabasa",
+          "Rajabasa Pemuka",
+          "Rajabasa Raya",
+          "NyUNYAI"
+        ]
+      }
+    ]
+  },
+  {
+    "city": "Lampung Selatan",
+    "districts": [
+      {
+        "district": "Kalianda",
+        "sub_districts": [
+          "Kalianda",
+          "Bumi Agung",
+          "Kedaton",
+          "Maja",
+          "Agom"
+        ]
+      },
+      {
+        "district": "Natar",
+        "sub_districts": [
+          "Natar",
+          "Pemanggilan",
+          "Hajimena",
+          "Merak Batin",
+          "Bumi Sari"
+        ]
+      }
+    ]
+  },
+  {
+    "city": "Metro",
+    "districts": [
+      {
+        "district": "Metro Pusat",
+        "sub_districts": [
+          "Metro",
+          "Imopuro",
+          "Yosomulyo",
+          "Hadimulyo Barat"
+        ]
+      },
+      {
+        "district": "Metro Barat",
+        "sub_districts": [
+          "Ganjar Asri",
+          "Ganjar Agung",
+          "Mulyojati"
+        ]
+      }
+    ]
+  }
+]

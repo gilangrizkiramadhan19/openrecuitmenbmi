@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronDown, Check, Briefcase, Fish, Globe, TrendingUp, Award } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -6,72 +6,45 @@ import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import JobCard from '../components/JobCard';
 import Button from '../components/Button';
+import api from '../axios';
 
 export default function LandingPage() {
   const [expandedFaq, setExpandedFaq] = useState(null);
 
-  const jobs = [
-    {
-      id: 1,
-      title: 'Senior Process Engineer',
-      department: 'Operations',
-      location: 'Bekasi, Indonesia',
-      type: 'Full-time',
-      posted: '2 days ago',
-      description: 'Lead our seafood processing operations with advanced quality control standards. Must have 7+ years experience in food manufacturing.',
-      applicants: 45,
-    },
-    {
-      id: 2,
-      title: 'Export Logistics Manager',
-      department: 'Supply Chain',
-      location: 'Jakarta, Indonesia',
-      type: 'Full-time',
-      posted: '5 days ago',
-      description: 'Manage international seafood export operations and customs compliance. Experience in logistics and international trade required.',
-      applicants: 28,
-    },
-    {
-      id: 3,
-      title: 'Quality Assurance Specialist',
-      department: 'Quality Control',
-      location: 'Bekasi, Indonesia',
-      type: 'Full-time',
-      posted: '1 week ago',
-      description: 'Ensure highest food safety and quality standards for export products. ISO certification and food science background required.',
-      applicants: 32,
-    },
-    {
-      id: 4,
-      title: 'International Sales Executive',
-      department: 'Sales',
-      location: 'Jakarta, Indonesia',
-      type: 'Full-time',
-      posted: '3 days ago',
-      description: 'Build relationships with international buyers and expand market presence. Bilingual skills and export experience required.',
-      applicants: 38,
-    },
-    {
-      id: 5,
-      title: 'Production Planning Coordinator',
-      department: 'Planning',
-      location: 'Bekasi, Indonesia',
-      type: 'Full-time',
-      posted: '1 week ago',
-      description: 'Optimize production schedules and inventory management. ERP system experience and analytical skills required.',
-      applicants: 25,
-    },
-    {
-      id: 6,
-      title: 'Finance & Accounting Officer',
-      department: 'Finance',
-      location: 'Jakarta, Indonesia',
-      type: 'Full-time',
-      posted: '4 days ago',
-      description: 'Support financial operations for international export business. Knowledge of trade finance and FX management required.',
-      applicants: 19,
-    },
-  ];
+  const [jobs, setJobs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchJobs = async () => {
+      try {
+        const response = await api.get('/jobs');
+        // Filter jobs with status 'Publish' or 'open' and take first 6
+        const publishedJobs = (response.data.data || [])
+          .filter(job => job.status === 'Publish' || job.status === 'open')
+          .slice(0, 6)
+          .map(job => {
+            // Format date to relative time or simple string
+            const date = new Date(job.created_at);
+            const now = new Date();
+            const diffTime = Math.abs(now - date);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            
+            return {
+              ...job,
+              posted: diffDays === 1 ? 'Today' : `${diffDays} days ago`,
+              applicants: job.applications_count || 0,
+            };
+          });
+        setJobs(publishedJobs);
+      } catch (error) {
+        console.error('Failed to fetch jobs:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchJobs();
+  }, []);
 
   const faqs = [
     {
@@ -274,14 +247,24 @@ export default function LandingPage() {
             whileInView="visible"
             viewport={{ once: true }}
           >
-            {jobs.map((job) => (
-              <motion.div
-                key={job.id}
-                variants={itemVariants}
-              >
-                <JobCard job={job} />
-              </motion.div>
-            ))}
+            {loading ? (
+              <div className="col-span-full text-center py-10 text-slate-500">
+                Memuat lowongan...
+              </div>
+            ) : jobs.length > 0 ? (
+              jobs.map((job) => (
+                <motion.div
+                  key={job.id}
+                  variants={itemVariants}
+                >
+                  <JobCard job={job} />
+                </motion.div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-10 text-slate-500">
+                Belum ada lowongan yang tersedia saat ini.
+              </div>
+            )}
           </motion.div>
 
           <motion.div

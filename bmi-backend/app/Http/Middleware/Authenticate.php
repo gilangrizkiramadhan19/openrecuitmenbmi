@@ -7,11 +7,14 @@ use Illuminate\Http\Request;
 
 class Authenticate extends Middleware
 {
-    /**
-     * Get the path the user should be redirected to when they are not authenticated.
-     */
     protected function redirectTo(Request $request): ?string
     {
-        return $request->expectsJson() ? null : route('login');
+        // Jika request minta JSON atau lewat jalur API, jangan di-redirect!
+        // Ini akan membuat Laravel mengirim error 401 yang rapi ke React
+        if ($request->expectsJson() || $request->is('api/*')) {
+            return null;
+        }
+
+        return route('login');
     }
 }

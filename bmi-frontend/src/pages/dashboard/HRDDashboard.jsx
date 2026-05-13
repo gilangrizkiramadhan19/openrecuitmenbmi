@@ -1,599 +1,608 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import api from "../../axios";
+import { useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
   Users,
   Calendar,
-  BarChart3,
-  Bell,
-  Settings,
   LogOut,
-  Menu,
   X,
-  Search,
-  Filter,
-  ChevronDown,
   Plus,
-  Edit2,
   Trash2,
-  Eye,
-  MoreVertical,
-  TrendingUp,
-  CheckCircle,
+  MapPin,
   Clock,
-  AlertCircle,
-} from 'lucide-react';
+  CheckCircle,
+  ClipboardList,
+} from "lucide-react";
 
 const HRDDashboard = () => {
+  const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeSection, setActiveSection] = useState('dashboard');
+  const [activeSection, setActiveSection] = useState("dashboard");
   const [showJobModal, setShowJobModal] = useState(false);
-  const [searchCandidates, setSearchCandidates] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [notifications, setNotifications] = useState([
-    { id: 1, message: '5 aplikasi baru dari posisi Quality Assurance', time: '5 menit lalu', unread: true },
-    { id: 2, message: 'Interview dengan Ahmad Wijaya sudah dijadwalkan', time: '1 jam lalu', unread: true },
-    { id: 3, message: 'Lamaran ditolak untuk posisi Manager Produksi', time: '2 jam lalu', unread: false },
-  ]);
 
-  const candidates = [
-    { id: 1, name: 'Ahmad Wijaya', position: 'Quality Assurance', status: 'interview', date: '25 May 2024', email: 'ahmad@email.com' },
-    { id: 2, name: 'Siti Nurhaliza', position: 'Export Specialist', status: 'reviewing', date: '-', email: 'siti@email.com' },
-    { id: 3, name: 'Rinto Harahap', position: 'Production Staff', status: 'accepted', date: '20 May 2024', email: 'rinto@email.com' },
-    { id: 4, name: 'Budi Santoso', position: 'Supply Chain', status: 'rejected', date: '-', email: 'budi@email.com' },
-    { id: 5, name: 'Dewi Lestari', position: 'Quality Assurance', status: 'interview', date: '26 May 2024', email: 'dewi@email.com' },
-  ];
+  const [candidates, setCandidates] = useState([]);
+  const [jobPostings, setJobPostings] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  const jobPostings = [
-    { id: 1, title: 'Quality Assurance', department: 'Quality', applicants: 24, status: 'active', deadline: '30 Jun 2024' },
-    { id: 2, title: 'Export Specialist', department: 'Export', applicants: 18, status: 'active', deadline: '15 Jun 2024' },
-    { id: 3, title: 'Production Manager', department: 'Production', applicants: 12, status: 'active', deadline: '20 Jun 2024' },
-    { id: 4, title: 'HR Staff', department: 'Admin', applicants: 8, status: 'closed', deadline: '05 Jun 2024' },
-  ];
-
-  const stats = [
-    { label: 'Total Pelamar', value: '247', icon: Users, trend: '+12', color: 'from-blue-600 to-blue-700' },
-    { label: 'Lowongan Aktif', value: '12', icon: Briefcase, trend: '+2', color: 'from-green-600 to-green-700' },
-    { label: 'Interview Terjadwal', value: '18', icon: Calendar, trend: '+5', color: 'from-purple-600 to-purple-700' },
-    { label: 'Diterima', value: '34', icon: CheckCircle, trend: '+4', color: 'from-emerald-600 to-emerald-700' },
-  ];
-
-  const filteredCandidates = candidates.filter(c => {
-    const matchesSearch = c.name.toLowerCase().includes(searchCandidates.toLowerCase()) ||
-                         c.position.toLowerCase().includes(searchCandidates.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || c.status === filterStatus;
-    return matchesSearch && matchesFilter;
+  // State Form Lowongan (Lengkap)
+  const [newJob, setNewJob] = useState({
+    title: "",
+    department: "Produksi",
+    type: "Full Time",
+    location: "Lampung",
+    work_system: "WFO",
+    description: "",
+    qualifications: "",
+    benefits: "",
+    min_education: "SMA/SMK",
+    min_age: "",
+    major: "Semua Jurusan",
+    deadline: "",
+    headcount: 1,
+    status: "Publish",
   });
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [resApps, resJobs] = await Promise.all([
+        api.get("/hrd/applicants").catch(() => ({ data: { data: [] } })),
+        api.get("/jobs"),
+      ]);
+      setCandidates(resApps.data.data || []);
+      setJobPostings(resJobs.data.data || []);
+    } catch (err) {
+      console.error("Gagal ambil data:", err);
+      if (err.response?.status === 401) {
+        localStorage.clear();
+        navigate("/hrd/login");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  // === FUNGSI BUAT LOWONGAN ===
+  const handleCreateJob = async (e) => {
+    e.preventDefault();
+
+    // Validasi Frontend
+    if (
+      !newJob.title ||
+      !newJob.description ||
+      !newJob.qualifications ||
+      !newJob.min_education ||
+      !newJob.deadline ||
+      !newJob.headcount
+    ) {
+      alert("Mohon isi semua field yang wajib (*)");
+      return;
+    }
+
+    try {
+      const res = await api.post("/jobs", newJob);
+
+      alert(`✅ Lowongan "${res.data.data.title}" berhasil diterbitkan!`);
+      setShowJobModal(false);
+
+      // Reset Form
+      setNewJob({
+        title: "",
+        department: "Produksi",
+        type: "Full Time",
+        location: "Lampung",
+        work_system: "WFO",
+        description: "",
+        qualifications: "",
+        benefits: "",
+        min_education: "SMA/SMK",
+        min_age: "",
+        major: "Semua Jurusan",
+        deadline: "",
+        headcount: 1,
+        status: "Publish",
+      });
+
+      fetchData();
+    } catch (err) {
+      console.error("DETAIL ERROR:", err.response?.data);
+
+      if (err.response?.status === 422) {
+        const errors = Object.values(err.response.data.errors || {})
+          .flat()
+          .join("\n");
+        alert("❌ Validasi Gagal:\n" + errors);
+      } else {
+        alert(
+          "Gagal: " +
+            (err.response?.data?.message || "Terjadi kesalahan server"),
+        );
+      }
+    }
+  };
+
+  const handleDeleteJob = async (id) => {
+    if (!window.confirm("Yakin ingin menghapus lowongan ini?")) return;
+    try {
+      await api.delete(`/jobs/${id}`);
+      fetchData();
+    } catch (err) {
+      alert("Gagal menghapus lowongan.");
+    }
+  };
 
   const getStatusColor = (status) => {
     const colors = {
-      interview: 'bg-blue-100 text-blue-800',
-      reviewing: 'bg-yellow-100 text-yellow-800',
-      accepted: 'bg-green-100 text-green-800',
-      rejected: 'bg-red-100 text-red-800',
+      Publish: "bg-emerald-500/20 text-emerald-400",
+      Draft: "bg-slate-500/20 text-slate-400",
+      Ditutup: "bg-red-500/20 text-red-400",
     };
-    return colors[status] || 'bg-gray-100 text-gray-800';
+    return colors[status] || "bg-slate-500/20 text-slate-400";
   };
 
-  const navigationItems = [
-    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'jobs', label: 'Kelola Lowongan', icon: Briefcase },
-    { id: 'candidates', label: 'Pelamar', icon: Users },
-    { id: 'interviews', label: 'Jadwal Interview', icon: Calendar },
-    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-    { id: 'notifications', label: 'Notifikasi', icon: Bell },
-    { id: 'settings', label: 'Pengaturan', icon: Settings },
+  const stats = [
+    {
+      label: "Total Pelamar",
+      value: candidates.length,
+      icon: Users,
+      color: "from-blue-600 to-blue-700",
+    },
+    {
+      label: "Lowongan Aktif",
+      value: jobPostings.filter((j) => j.status === "Publish").length,
+      icon: Briefcase,
+      color: "from-green-600 to-green-700",
+    },
+    {
+      label: "Proses Seleksi",
+      value: 0,
+      icon: ClipboardList,
+      color: "from-purple-600 to-purple-700",
+    },
+    {
+      label: "Diterima",
+      value: 0,
+      icon: CheckCircle,
+      color: "from-emerald-600 to-emerald-700",
+    },
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white font-bold tracking-tighter animate-pulse text-xl">
+        SINKRONISASI DATA BMI HRD...
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex font-sans">
       {/* Sidebar */}
       <motion.div
-        initial={false}
-        animate={{ width: sidebarOpen ? 280 : 80 }}
-        className="bg-slate-900 border-r border-slate-800 flex flex-col transition-all duration-300"
+        animate={{ width: sidebarOpen ? 260 : 80 }}
+        className="bg-slate-900 border-r border-slate-800 flex flex-col relative z-20"
       >
-        {/* Logo Section */}
-        <div className="p-6 border-b border-slate-800">
-          <div className="flex items-center gap-3">
-            <img src="/logo-bmi.png" alt="BMI" className="h-10 w-auto" />
-            {sidebarOpen && <span className="font-bold text-white text-lg hidden lg:inline">BMI HRD</span>}
+        <div className="p-6 border-b border-slate-800 flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center font-black text-white shadow-xl shadow-blue-600/20">
+            B
           </div>
+          {sidebarOpen && (
+            <span className="font-black text-white tracking-widest text-xs">
+              BMI INTERNAL
+            </span>
+          )}
         </div>
 
-        {/* Navigation */}
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {navigationItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeSection === item.id;
-            return (
-              <motion.button
-                key={item.id}
-                onClick={() => setActiveSection(item.id)}
-                whileHover={{ x: 4 }}
-                className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                  isActive
-                    ? 'bg-blue-600/20 border border-blue-500/50 text-blue-400'
-                    : 'text-slate-400 hover:bg-slate-800/50'
-                }`}
-              >
-                <Icon size={20} />
-                {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
-              </motion.button>
-            );
-          })}
+        <nav className="flex-1 p-4 space-y-2">
+          {[
+            { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+            { id: "jobs", label: "Kelola Lowongan", icon: Briefcase },
+            { id: "candidates", label: "Daftar Pelamar", icon: Users },
+          ].map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-300 ${
+                activeSection === item.id
+                  ? "bg-blue-600 text-white shadow-2xl shadow-blue-600/20"
+                  : "text-slate-400 hover:bg-slate-800"
+              }`}
+            >
+              <item.icon size={20} />
+              {sidebarOpen && (
+                <span className="text-sm font-bold">{item.label}</span>
+              )}
+            </button>
+          ))}
         </nav>
 
-        {/* Logout */}
         <div className="p-4 border-t border-slate-800">
-          <motion.button
-            whileHover={{ x: 4 }}
-            className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+          <button
+            onClick={() => {
+              localStorage.clear();
+              navigate("/hrd/login");
+            }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors"
           >
             <LogOut size={20} />
-            {sidebarOpen && <span className="text-sm font-medium">Logout</span>}
-          </motion.button>
+            {sidebarOpen && <span className="text-sm font-bold">Log Out</span>}
+          </button>
         </div>
-
-        {/* Toggle Button */}
-        <button
-          onClick={() => setSidebarOpen(!sidebarOpen)}
-          className="absolute -right-3 top-24 bg-slate-800 p-1.5 rounded-full border border-slate-700 hover:bg-slate-700 transition"
-        >
-          {sidebarOpen ? <ChevronDown size={18} className="rotate-90" /> : <ChevronDown size={18} className="-rotate-90" />}
-        </button>
       </motion.div>
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Navbar */}
-        <div className="bg-slate-900 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="lg:hidden p-2 hover:bg-slate-800 rounded-lg transition"
-            >
-              {sidebarOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-            <h2 className="text-xl font-semibold text-white">
-              {navigationItems.find(item => item.id === activeSection)?.label || 'Dashboard'}
-            </h2>
+        <header className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 px-8 py-5 flex justify-between items-center">
+          <h2 className="text-2xl font-black text-white tracking-tight">
+            {activeSection === "dashboard"
+              ? "RINGKASAN REKRUTMEN"
+              : activeSection.toUpperCase()}
+          </h2>
+          <div className="w-10 h-10 bg-slate-800 rounded-full border border-slate-700 flex items-center justify-center font-bold text-blue-400">
+            HR
           </div>
+        </header>
 
-          <div className="flex items-center gap-4">
-            {/* Search Bar */}
-            <div className="hidden md:flex relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={18} />
-              <input
-                type="text"
-                placeholder="Cari pelamar..."
-                className="pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none transition-colors w-48"
-                value={searchCandidates}
-                onChange={(e) => setSearchCandidates(e.target.value)}
-              />
-            </div>
-
-            {/* Notifications */}
-            <div className="relative group">
-              <button className="p-2 hover:bg-slate-800 rounded-lg transition relative">
-                <Bell size={20} />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-              </button>
-
-              {/* Notification Dropdown */}
-              <div className="absolute right-0 mt-2 w-80 bg-slate-800 border border-slate-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <div className="p-4 border-b border-slate-700">
-                  <h3 className="font-semibold text-white">Notifikasi</h3>
-                </div>
-                <div className="divide-y divide-slate-700 max-h-96 overflow-y-auto">
-                  {notifications.map(notif => (
-                    <div key={notif.id} className={`p-4 hover:bg-slate-700/50 transition ${notif.unread ? 'bg-slate-700/30' : ''}`}>
-                      <p className="text-sm text-slate-200">{notif.message}</p>
-                      <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
+        <main className="flex-1 overflow-y-auto p-8">
+          <AnimatePresence mode="wait">
+            {activeSection === "dashboard" && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-8"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {stats.map((stat, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-slate-900 border border-slate-800 p-6 rounded-[32px] shadow-sm"
+                    >
+                      <div
+                        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-4 shadow-lg`}
+                      >
+                        <stat.icon className="text-white" size={24} />
+                      </div>
+                      <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                        {stat.label}
+                      </p>
+                      <h3 className="text-3xl font-black mt-1 text-white">
+                        {stat.value}
+                      </h3>
                     </div>
                   ))}
                 </div>
-              </div>
-            </div>
+              </motion.div>
+            )}
 
-            {/* Profile Dropdown */}
-            <div className="relative group">
-              <button className="flex items-center gap-3 px-4 py-2 hover:bg-slate-800 rounded-lg transition">
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-600 to-blue-700 rounded-full flex items-center justify-center text-sm font-bold">
-                  HJ
-                </div>
-                <span className="hidden sm:inline text-sm">HR Manager</span>
-              </button>
-
-              {/* Profile Menu */}
-              <div className="absolute right-0 mt-2 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <a href="#" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition">
-                  Profile
-                </a>
-                <a href="#" className="block px-4 py-2 text-sm text-slate-300 hover:bg-slate-700 transition">
-                  Pengaturan
-                </a>
-                <hr className="border-slate-700" />
-                <a href="/hrd/login" className="block px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition">
-                  Logout
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
-          <AnimatePresence mode="wait">
-            {activeSection === 'dashboard' && (
+            {activeSection === "jobs" && (
               <motion.div
-                key="dashboard"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
                 className="space-y-6"
               >
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  {stats.map((stat, idx) => {
-                    const Icon = stat.icon;
-                    return (
-                      <motion.div
-                        key={idx}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: idx * 0.1 }}
-                        className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-slate-700 transition"
-                      >
-                        <div className="flex items-start justify-between mb-4">
-                          <div className={`p-3 rounded-lg bg-gradient-to-br ${stat.color}`}>
-                            <Icon size={24} className="text-white" />
-                          </div>
-                          <span className="text-green-400 text-sm font-semibold">{stat.trend}</span>
-                        </div>
-                        <p className="text-slate-400 text-sm mb-1">{stat.label}</p>
-                        <p className="text-4xl font-bold text-white">{stat.value}</p>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-
-                {/* Charts Section */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Applicant Trend */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.2 }}
-                    className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-lg p-6"
-                  >
-                    <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
-                      <TrendingUp size={20} />
-                      Tren Pelamar
-                    </h3>
-                    <div className="h-64 bg-slate-800/50 rounded-lg flex items-end justify-around p-4">
-                      {[35, 45, 38, 52, 48, 65, 72].map((height, idx) => (
-                        <div
-                          key={idx}
-                          className="flex-1 mx-1 bg-gradient-to-t from-blue-600 to-blue-500 rounded-t-lg opacity-70 hover:opacity-100 transition"
-                          style={{ height: `${height}%` }}
-                        />
-                      ))}
-                    </div>
-                    <div className="flex justify-between text-xs text-slate-500 mt-2">
-                      {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, idx) => (
-                        <span key={idx}>{day}</span>
-                      ))}
-                    </div>
-                  </motion.div>
-
-                  {/* Quick Actions */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-6"
-                  >
-                    <h3 className="text-lg font-semibold text-white mb-4">Aksi Cepat</h3>
-                    <div className="space-y-3">
-                      <button
-                        onClick={() => setShowJobModal(true)}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-lg text-white font-semibold transition-all transform hover:scale-105 active:scale-95"
-                      >
-                        <Plus size={20} />
-                        Buat Lowongan Baru
-                      </button>
-                      <button className="w-full px-4 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-semibold transition">
-                        Lihat Semua Pelamar
-                      </button>
-                      <button className="w-full px-4 py-3 bg-slate-800 hover:bg-slate-700 rounded-lg text-white font-semibold transition">
-                        Jadwalkan Interview
-                      </button>
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* Candidates Table */}
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.4 }}
-                  className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden"
-                >
-                  <div className="p-6 border-b border-slate-800 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-white">Pelamar Terbaru</h3>
-                    <a href="#" className="text-blue-400 hover:text-blue-300 text-sm">Lihat Semua →</a>
-                  </div>
-
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-800/50 border-b border-slate-800">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Nama</th>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Posisi</th>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Status</th>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Tanggal</th>
-                          <th className="px-6 py-3 text-center text-slate-400 font-semibold">Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {candidates.slice(0, 3).map((candidate, idx) => (
-                          <motion.tr
-                            key={candidate.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ delay: 0.4 + idx * 0.05 }}
-                            className="border-b border-slate-800 hover:bg-slate-800/30 transition"
-                          >
-                            <td className="px-6 py-4 text-white font-medium">{candidate.name}</td>
-                            <td className="px-6 py-4 text-slate-300">{candidate.position}</td>
-                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(candidate.status)}`}>
-                                {candidate.status.charAt(0).toUpperCase() + candidate.status.slice(1)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-slate-400">{candidate.date}</td>
-                            <td className="px-6 py-4 text-center">
-                              <button className="p-2 hover:bg-slate-700 rounded-lg transition">
-                                <MoreVertical size={16} />
-                              </button>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </motion.div>
-              </motion.div>
-            )}
-
-            {activeSection === 'candidates' && (
-              <motion.div
-                key="candidates"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="bg-slate-900 border border-slate-800 rounded-lg overflow-hidden">
-                  {/* Header with filters */}
-                  <div className="p-6 border-b border-slate-800 space-y-4">
-                    <div className="flex flex-col md:flex-row gap-4">
-                      <div className="flex-1 relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500" size={18} />
-                        <input
-                          type="text"
-                          placeholder="Cari nama atau posisi..."
-                          className="w-full pl-10 pr-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                          value={searchCandidates}
-                          onChange={(e) => setSearchCandidates(e.target.value)}
-                        />
-                      </div>
-                      <select
-                        value={filterStatus}
-                        onChange={(e) => setFilterStatus(e.target.value)}
-                        className="px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-sm text-white focus:border-blue-500 focus:outline-none"
-                      >
-                        <option value="all">Semua Status</option>
-                        <option value="reviewing">Sedang Review</option>
-                        <option value="interview">Interview</option>
-                        <option value="accepted">Diterima</option>
-                        <option value="rejected">Ditolak</option>
-                      </select>
-                    </div>
-                    <p className="text-sm text-slate-400">
-                      Menampilkan {filteredCandidates.length} dari {candidates.length} pelamar
-                    </p>
-                  </div>
-
-                  {/* Candidates Table */}
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-slate-800/50 border-b border-slate-800">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Nama</th>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Email</th>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Posisi</th>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Status</th>
-                          <th className="px-6 py-3 text-left text-slate-400 font-semibold">Tanggal Interview</th>
-                          <th className="px-6 py-3 text-center text-slate-400 font-semibold">Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredCandidates.map((candidate) => (
-                          <motion.tr
-                            key={candidate.id}
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            className="border-b border-slate-800 hover:bg-slate-800/30 transition"
-                          >
-                            <td className="px-6 py-4 text-white font-medium">{candidate.name}</td>
-                            <td className="px-6 py-4 text-slate-300 text-xs">{candidate.email}</td>
-                            <td className="px-6 py-4 text-slate-300">{candidate.position}</td>
-                            <td className="px-6 py-4">
-                              <span className={`px-3 py-1 rounded-full text-xs font-semibold ${getStatusColor(candidate.status)}`}>
-                                {candidate.status.charAt(0).toUpperCase() + candidate.status.slice(1)}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 text-slate-400">{candidate.date}</td>
-                            <td className="px-6 py-4 text-center">
-                              <div className="flex items-center justify-center gap-2">
-                                <button className="p-2 hover:bg-slate-700 rounded-lg transition text-blue-400">
-                                  <Eye size={16} />
-                                </button>
-                                <button className="p-2 hover:bg-slate-700 rounded-lg transition text-yellow-400">
-                                  <Edit2 size={16} />
-                                </button>
-                                <button className="p-2 hover:bg-slate-700 rounded-lg transition text-red-400">
-                                  <Trash2 size={16} />
-                                </button>
-                              </div>
-                            </td>
-                          </motion.tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-
-            {activeSection === 'jobs' && (
-              <motion.div
-                key="jobs"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-              >
-                <div className="flex justify-end mb-6">
+                <div className="flex justify-between items-center bg-slate-900 p-6 rounded-[32px] border border-slate-800">
+                  <h3 className="text-xl font-black text-white">
+                    Manajemen Lowongan
+                  </h3>
                   <button
                     onClick={() => setShowJobModal(true)}
-                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 rounded-lg text-white font-semibold transition-all transform hover:scale-105 active:scale-95"
+                    className="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-2xl font-black hover:bg-blue-500 shadow-xl shadow-blue-600/30 text-sm transition-all"
                   >
-                    <Plus size={20} />
-                    Buat Lowongan Baru
+                    <Plus size={18} /> TERBITKAN LOWONGAN
                   </button>
                 </div>
 
-                <div className="grid gap-4">
-                  {jobPostings.map((job, idx) => (
-                    <motion.div
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {jobPostings.map((job) => (
+                    <div
                       key={job.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1 }}
-                      className="bg-slate-900 border border-slate-800 rounded-lg p-6 hover:border-slate-700 transition"
+                      className="bg-slate-900 border border-slate-800 p-6 rounded-[32px] hover:border-blue-500/50 transition-all group shadow-lg"
                     >
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h3 className="text-lg font-semibold text-white">{job.title}</h3>
-                          <p className="text-sm text-slate-400">{job.department}</p>
+                      <div className="flex justify-between items-start mb-5">
+                        <div className="space-y-1">
+                          <h4 className="text-lg font-black text-white group-hover:text-blue-400 transition-colors">
+                            {job.title}
+                          </h4>
+                          <div className="flex items-center gap-3 mt-2">
+                            <span className="text-[10px] flex items-center gap-1 text-slate-400 font-bold bg-slate-800 px-2 py-1 rounded-lg">
+                              <MapPin size={10} className="text-blue-500" />{" "}
+                              {job.location}
+                            </span>
+                            <span className="text-[10px] flex items-center gap-1 text-slate-400 font-bold bg-slate-800 px-2 py-1 rounded-lg">
+                              <Clock size={10} className="text-blue-500" />{" "}
+                              {job.work_system}
+                            </span>
+                          </div>
                         </div>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          job.status === 'active'
-                            ? 'bg-green-500/20 text-green-400'
-                            : 'bg-gray-500/20 text-gray-400'
-                        }`}>
-                          {job.status === 'active' ? 'Aktif' : 'Ditutup'}
+                        <span
+                          className={`px-3 py-1 text-[10px] font-black rounded-full uppercase ${getStatusColor(job.status)}`}
+                        >
+                          {job.status}
                         </span>
                       </div>
-
-                      <div className="grid grid-cols-3 gap-4 mb-4 text-sm">
-                        <div>
-                          <p className="text-slate-500">Pelamar</p>
-                          <p className="text-lg font-semibold text-white">{job.applicants}</p>
-                        </div>
-                        <div>
-                          <p className="text-slate-500">Deadline</p>
-                          <p className="text-lg font-semibold text-white">{job.deadline}</p>
-                        </div>
-                        <div className="flex items-end gap-2">
-                          <button className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition">
-                            Edit
-                          </button>
-                          <button className="flex-1 px-3 py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-sm transition">
-                            Lihat
-                          </button>
-                        </div>
+                      <div className="flex justify-between items-center pt-5 border-t border-slate-800/50 text-[10px] text-slate-500 font-black uppercase">
+                        {job.type} • {job.department}
+                        <button
+                          onClick={() => handleDeleteJob(job.id)}
+                          className="p-2.5 bg-red-500/5 hover:bg-red-500/20 rounded-xl text-red-500 transition-all"
+                        >
+                          <Trash2 size={16} />
+                        </button>
                       </div>
-                    </motion.div>
+                    </div>
                   ))}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
-        </div>
+        </main>
       </div>
 
-      {/* Post Job Modal */}
+      {/* MODAL FORM LOWONGAN - SUDAH LENGKAP */}
       {showJobModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-950/90 backdrop-blur-xl z-[100] flex items-center justify-center p-6">
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            className="bg-slate-900 border border-slate-800 rounded-lg max-w-2xl w-full max-h-96 overflow-y-auto"
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-[48px] shadow-2xl overflow-hidden"
           >
-            <div className="p-6 border-b border-slate-800 flex items-center justify-between sticky top-0 bg-slate-900">
-              <h2 className="text-xl font-semibold text-white">Buat Lowongan Baru</h2>
+            <div className="p-8 border-b border-slate-800 flex justify-between items-center">
+              <h3 className="text-xl font-black text-white">
+                TERBITKAN LOWONGAN BARU
+              </h3>
               <button
                 onClick={() => setShowJobModal(false)}
-                className="p-2 hover:bg-slate-800 rounded-lg transition"
+                className="w-10 h-10 flex items-center justify-center bg-slate-800 hover:bg-slate-700 text-slate-400 rounded-full"
               >
                 <X size={20} />
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Judul Posisi</label>
-                <input
-                  type="text"
-                  placeholder="Contoh: Quality Assurance Manager"
-                  className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
+            <form
+              onSubmit={handleCreateJob}
+              className="p-8 space-y-8 max-h-[75vh] overflow-y-auto custom-scrollbar"
+            >
+              {/* 1. Informasi Dasar */}
+              <div className="space-y-4">
+                <h4 className="text-blue-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">
+                  1. Informasi Dasar
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="col-span-2 space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Nama Posisi *
+                    </label>
+                    <input
+                      type="text"
+                      value={newJob.title}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, title: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold focus:border-blue-600"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Departemen *
+                    </label>
+                    <input
+                      type="text"
+                      value={newJob.department}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, department: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold focus:border-blue-600"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Tipe Kerja *
+                    </label>
+                    <select
+                      value={newJob.type}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, type: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                    >
+                      <option>Full Time</option>
+                      <option>Part Time</option>
+                      <option>Internship/PKL</option>
+                      <option>Kontrak</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Sistem Kerja *
+                    </label>
+                    <select
+                      value={newJob.work_system}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, work_system: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                    >
+                      <option>WFO</option>
+                      <option>Hybrid</option>
+                      <option>Remote</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Lokasi *
+                    </label>
+                    <input
+                      type="text"
+                      value={newJob.location}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, location: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Jumlah Dibutuhkan *
+                    </label>
+                    <input
+                      type="number"
+                      value={newJob.headcount}
+                      onChange={(e) =>
+                        setNewJob({
+                          ...newJob,
+                          headcount: parseInt(e.target.value) || 1,
+                        })
+                      }
+                      min="1"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 2. Detail & Kualifikasi */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/50">
+                <h4 className="text-blue-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">
+                  2. Detail & Kualifikasi
+                </h4>
+                <textarea
+                  placeholder="Deskripsi Tugas & Tanggung Jawab..."
+                  value={newJob.description}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, description: e.target.value })
+                  }
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white h-32 focus:border-blue-600"
+                  required
+                />
+                <textarea
+                  placeholder="Kualifikasi (Pendidikan, Skill, Pengalaman)..."
+                  value={newJob.qualifications}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, qualifications: e.target.value })
+                  }
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white h-32 focus:border-blue-600"
+                  required
+                />
+                <textarea
+                  placeholder="Benefit & Fasilitas..."
+                  value={newJob.benefits}
+                  onChange={(e) =>
+                    setNewJob({ ...newJob, benefits: e.target.value })
+                  }
+                  className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white h-24 focus:border-blue-600"
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Departemen</label>
-                  <input
-                    type="text"
-                    placeholder="Quality"
-                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-slate-300 mb-2">Lokasi</label>
-                  <input
-                    type="text"
-                    placeholder="Jakarta"
-                    className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:border-blue-500 focus:outline-none"
-                  />
+              {/* 3. Pengaturan Rekrutmen */}
+              <div className="space-y-4 pt-4 border-t border-slate-800/50">
+                <h4 className="text-blue-500 font-black text-[10px] uppercase tracking-[0.2em] mb-4">
+                  3. Pengaturan Rekrutmen
+                </h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Minimal Pendidikan *
+                    </label>
+                    <select
+                      value={newJob.min_education}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, min_education: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                      required
+                    >
+                      <option value="SMA/SMK">SMA/SMK</option>
+                      <option value="D3">D3</option>
+                      <option value="S1">S1</option>
+                      <option value="S2">S2</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Jurusan
+                    </label>
+                    <input
+                      type="text"
+                      value={newJob.major}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, major: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Minimal Usia
+                    </label>
+                    <input
+                      type="number"
+                      value={newJob.min_age}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, min_age: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                      placeholder="Contoh: 18"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Deadline Lamaran *
+                    </label>
+                    <input
+                      type="date"
+                      value={newJob.deadline}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, deadline: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-slate-500 font-black uppercase">
+                      Status
+                    </label>
+                    <select
+                      value={newJob.status}
+                      onChange={(e) =>
+                        setNewJob({ ...newJob, status: e.target.value })
+                      }
+                      className="w-full bg-slate-950 border border-slate-800 rounded-2xl p-4 text-white font-bold"
+                    >
+                      <option value="Publish">PUBLISH (LIVE)</option>
+                      <option value="Draft">SIMPAN DRAFT</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-2">Tipe Pekerjaan</label>
-                <select className="w-full px-4 py-2 bg-slate-800 border border-slate-700 rounded-lg text-white focus:border-blue-500 focus:outline-none">
-                  <option>Full-time</option>
-                  <option>Part-time</option>
-                  <option>Contract</option>
-                </select>
-              </div>
-
-              <div className="flex gap-4 justify-end pt-4 border-t border-slate-700">
-                <button
-                  onClick={() => setShowJobModal(false)}
-                  className="px-6 py-2 border border-slate-700 text-slate-300 rounded-lg hover:bg-slate-800 transition"
-                >
-                  Batal
-                </button>
-                <button className="px-6 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-500 hover:to-blue-600 transition font-semibold">
-                  Buat Lowongan
-                </button>
-              </div>
-            </div>
+              <button
+                type="submit"
+                className="w-full py-5 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-black rounded-3xl hover:from-blue-500 transition-all uppercase tracking-widest text-sm shadow-2xl shadow-blue-600/30"
+              >
+                TERBITKAN LOWONGAN SEKARANG
+              </button>
+            </form>
           </motion.div>
         </div>
       )}

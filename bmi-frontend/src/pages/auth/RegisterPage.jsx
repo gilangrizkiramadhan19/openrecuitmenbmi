@@ -1,191 +1,169 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { Mail, User, Lock, Check, ArrowRight } from "lucide-react";
-import { motion } from "framer-motion";
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Mail, User, Lock, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
 
-import Navbar from "../../components/Navbar";
-import Button from "../../components/Button";
+import Navbar from '../../components/Navbar';
+import Button from '../../components/Button';
+import InputField from '../../components/forms/InputField';
+import api from '../../axios';
+
+const schema = yup.object().shape({
+  name: yup.string().required('Nama lengkap wajib diisi'),
+  email: yup.string().email('Format email tidak valid').required('Email wajib diisi'),
+  password: yup.string().min(8, 'Password minimal 8 karakter').required('Password wajib diisi'),
+  password_confirmation: yup.string()
+    .oneOf([yup.ref('password'), null], 'Konfirmasi password tidak cocok')
+    .required('Konfirmasi password wajib diisi'),
+});
 
 export default function RegisterPage() {
   const navigate = useNavigate();
-
-  const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    password: "",
-    password_confirmation: "",
+  const [serverError, setServerError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const { register, handleSubmit, formState: { errors } } = useForm({
+    resolver: yupResolver(schema),
+    mode: 'onTouched'
   });
-  const [errors, setErrors] = useState({});
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const validate = () => {
-    const newErrors = {};
-
-    if (!formData.fullName.trim())
-      newErrors.fullName = "Nama lengkap sesuai KTP diperlukan";
-    if (!formData.email) {
-      newErrors.email = "Email diperlukan";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Email tidak valid";
-    }
-    if (!formData.password) {
-      newErrors.password = "Password diperlukan";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password minimal 8 karakter";
-    }
-    if (formData.password !== formData.password_confirmation) {
-      newErrors.password_confirmation = "Password dan konfirmasi tidak cocok";
-    }
-
-    return newErrors;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = validate();
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
+  const onSubmit = async (data) => {
     setLoading(true);
-
+    setServerError('');
     try {
-      const response = await fetch("http://127.0.0.1:8000/api/register", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-        body: JSON.stringify({
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          password_confirmation: formData.password_confirmation,
-        }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setStep(2);
-      } else {
-        alert(
-          data.message ||
-            Object.values(data.errors || {}).flat()[0] ||
-            "Registrasi gagal",
-        );
-      }
+      await api.post('/register', data);
+      setSuccess(true);
+      setTimeout(() => navigate('/login'), 3000);
     } catch (error) {
-      console.error("Error:", error);
-      alert("Gagal terhubung ke server.");
+      setServerError(
+        error.response?.data?.message || 
+        Object.values(error.response?.data?.errors || {}).flat()[0] || 
+        'Terjadi kesalahan saat mendaftar. Silakan coba lagi.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
-  // Step 2 - Email Terkirim
-  if (step === 2) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-bmi-navy via-bmi-blue to-bmi-soft">
-        <Navbar showAuth={false} />
-        <div className="flex items-center justify-center min-h-[calc(100vh-64px)] px-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="max-w-md w-full bg-white rounded-3xl shadow-2xl p-10 text-center"
-          >
-            <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Check size={60} className="text-green-600" />
-            </div>
-            <h2 className="text-3xl font-bold text-bmi-navy mb-4">
-              Email Terkirim
-            </h2>
-            <p className="text-slate-600 mb-2">
-              Kami telah mengirimkan email verifikasi ke
-            </p>
-            <p className="font-semibold text-bmi-navy mb-6 break-all">
-              {formData.email}
-            </p>
-            <p className="text-sm text-slate-500 mb-8">
-              Silakan cek kotak masuk atau spam Anda.
-            </p>
-            <Button onClick={() => navigate("/login")} className="w-full mb-3">
-              Kembali ke Halaman Masuk
-            </Button>
-            <button
-              onClick={() => setStep(1)}
-              className="text-bmi-blue hover:underline text-sm font-medium"
-            >
-              Kirim ulang email
-            </button>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
+  const containerVariants = {
+    hidden: { opacity: 0, scale: 0.95 },
+    visible: { opacity: 1, scale: 1, transition: { duration: 0.5, ease: 'easeOut' } }
+  };
 
-  // Step 1 - Form Register
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bmi-navy via-bmi-blue to-bmi-soft">
+    <div className="min-h-screen bg-gradient-to-br from-bmi-navy via-bmi-blue to-bmi-soft flex flex-col">
       <Navbar showAuth={false} />
 
-      <div className="relative min-h-[calc(100vh-64px)] py-12 px-4">
-        <div className="max-w-md mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-              {/* Header */}
-              <div className="bg-gradient-to-r from-bmi-navy to-bmi-blue p-8 text-white">
-                <img src="/logo-bmi.png" alt="BMI Logo" className="h-10 mb-6" />
-                <h1 className="text-2xl font-bold">Buat Akun Baru</h1>
-                <p className="text-white/80 mt-2">
-                  Mulai perjalanan karir Anda bersama kami
+      <main className="flex-1 flex items-center justify-center p-4 py-12">
+        <AnimatePresence mode="wait">
+          {!success ? (
+            <motion.div
+              key="form"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full max-w-xl bg-white/90 backdrop-blur-xl rounded-[2rem] shadow-2xl border border-white/50 overflow-hidden"
+            >
+              <div className="bg-gradient-to-r from-bmi-navy to-bmi-blue px-8 py-10 text-center text-white relative overflow-hidden">
+                <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
+                <img src="/logo-bmi.png" alt="BMI Logo" className="h-12 mx-auto mb-6 relative z-10" />
+                <h1 className="text-3xl font-bold mb-2 relative z-10">Buat Akun Pelamar</h1>
+                <p className="text-white/80 relative z-10">Satu langkah menuju karir impian Anda di BMI.</p>
+              </div>
+
+              <div className="p-8 md:p-10">
+                {serverError && (
+                  <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-r-lg text-sm font-medium">
+                    {serverError}
+                  </div>
+                )}
+
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+                  <InputField
+                    label="Nama Lengkap"
+                    icon={User}
+                    placeholder="Sesuai KTP"
+                    {...register('name')}
+                    error={errors.name?.message}
+                    required
+                  />
+
+                  <InputField
+                    label="Alamat Email"
+                    icon={Mail}
+                    type="email"
+                    placeholder="nama@email.com"
+                    {...register('email')}
+                    error={errors.email?.message}
+                    required
+                  />
+
+                  <InputField
+                    label="Kata Sandi"
+                    icon={Lock}
+                    type="password"
+                    placeholder="Minimal 8 karakter"
+                    {...register('password')}
+                    error={errors.password?.message}
+                    required
+                  />
+
+                  <InputField
+                    label="Konfirmasi Kata Sandi"
+                    icon={Lock}
+                    type="password"
+                    placeholder="Ulangi kata sandi"
+                    {...register('password_confirmation')}
+                    error={errors.password_confirmation?.message}
+                    required
+                  />
+
+                  <div className="pt-4">
+                    <Button 
+                      type="submit" 
+                      className="w-full py-4 text-lg rounded-xl shadow-lg shadow-bmi-blue/30 flex justify-center items-center gap-2 group"
+                      disabled={loading}
+                    >
+                      {loading ? 'Memproses...' : 'Daftar Sekarang'}
+                      {!loading && <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />}
+                    </Button>
+                  </div>
+                </form>
+
+                <p className="text-center text-slate-600 mt-8 font-medium">
+                  Sudah memiliki akun?{' '}
+                  <Link to="/login" className="text-bmi-blue hover:text-bmi-navy transition-colors">
+                    Masuk di sini
+                  </Link>
                 </p>
               </div>
-
-              {/* Form */}
-              <div className="p-8">
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  {/* Form fields... (sama seperti sebelumnya) */}
-                  {/* ... isi form fullName, email, password, dll ... */}
-
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={loading}
-                    className="w-full bg-gradient-to-r from-bmi-navy to-bmi-blue"
-                  >
-                    {loading ? "Mendaftarkan Akun..." : "Daftar Sekarang"}
-                  </Button>
-
-                  <p className="text-center text-sm text-slate-600">
-                    Sudah punya akun?{" "}
-                    <Link
-                      to="/login"
-                      className="text-bmi-blue font-semibold hover:underline"
-                    >
-                      Masuk di sini
-                    </Link>
-                  </p>
-                </form>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="w-full max-w-md bg-white rounded-[2rem] p-10 text-center shadow-2xl"
+            >
+              <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                <CheckCircle2 size={60} className="text-green-500" />
               </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
+              <h2 className="text-3xl font-bold text-bmi-navy mb-4">Registrasi Berhasil!</h2>
+              <p className="text-slate-600 mb-8 leading-relaxed">
+                Akun Anda telah berhasil dibuat. Anda akan dialihkan ke halaman login dalam beberapa saat.
+              </p>
+              <Button onClick={() => navigate('/login')} className="w-full">
+                Masuk Sekarang
+              </Button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </main>
     </div>
   );
 }
