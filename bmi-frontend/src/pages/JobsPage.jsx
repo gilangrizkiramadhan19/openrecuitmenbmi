@@ -81,12 +81,12 @@ export default function JobsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bmi-soft">
+    <div className="min-h-screen bg-neutral-50">
       <Navbar userRole={userRole} showAuth={!userRole} />
 
       {/* Hero Section */}
       <motion.div
-        className="bg-gradient-to-br from-bmi-navy via-bmi-blue to-bmi-navy py-12 px-4 sm:px-6 lg:px-8 text-white relative overflow-hidden"
+        className="bg-gradient-to-r from-primary via-primary to-navy py-12 px-4 sm:px-6 lg:px-8 text-white relative overflow-hidden"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}

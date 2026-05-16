@@ -85,10 +85,10 @@ export default function JobDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-neutral-50 flex flex-col">
         <Navbar showAuth={!token} userRole={user?.role} />
         <div className="flex-1 flex justify-center items-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-bmi-blue"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
         </div>
         <Footer />
       </div>
@@ -97,7 +97,7 @@ export default function JobDetailPage() {
 
   if (error || !job) {
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="min-h-screen bg-neutral-50 flex flex-col">
         <Navbar showAuth={!token} userRole={user?.role} />
         <div className="flex-1 flex flex-col items-center justify-center p-4">
           <AlertCircle size={48} className="text-slate-400 mb-4" />
