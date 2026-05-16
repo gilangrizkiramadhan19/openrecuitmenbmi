@@ -404,17 +404,17 @@ const HRDDashboard = () => {
                   {stats.map((stat, idx) => (
                     <div
                       key={idx}
-                      className="bg-slate-900 border border-slate-800 p-6 rounded-[32px] shadow-sm"
+                      className="card p-6"
                     >
                       <div
-                        className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stat.color} flex items-center justify-center mb-4 shadow-lg`}
+                        className={`w-12 h-12 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center mb-4 shadow-base`}
                       >
                         <stat.icon className="text-white" size={24} />
                       </div>
-                      <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                      <p className="text-neutral-600 text-xs font-semibold uppercase tracking-widest">
                         {stat.label}
                       </p>
-                      <h3 className="text-3xl font-black mt-1 text-white">
+                      <h3 className="text-3xl font-bold mt-1 text-neutral-900">
                         {stat.value}
                       </h3>
                     </div>
