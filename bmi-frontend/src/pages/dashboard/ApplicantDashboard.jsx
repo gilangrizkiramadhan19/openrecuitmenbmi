@@ -105,12 +105,12 @@ export default function ApplicantDashboard() {
 
   const getStatusColor = (status) => {
     const colors = {
-      interview: 'bg-blue-100/80 text-blue-800 border-blue-300',
-      reviewing: 'bg-yellow-100/80 text-yellow-800 border-yellow-300',
-      accepted: 'bg-green-100/80 text-green-800 border-green-300',
-      rejected: 'bg-red-100/80 text-red-800 border-red-300',
+      interview: 'bg-info/10 text-info border-info/20',
+      reviewing: 'bg-warning/10 text-warning border-warning/20',
+      accepted: 'bg-success/10 text-success border-success/20',
+      rejected: 'bg-error/10 text-error border-error/20',
     };
-    return colors[status] || 'bg-gray-100/80 text-gray-800 border-gray-300';
+    return colors[status] || 'bg-neutral-100/80 text-neutral-800 border-neutral-300';
   };
 
   const getStatusLabel = (status) => {
@@ -124,7 +124,7 @@ export default function ApplicantDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-bmi-soft">
+    <div className="min-h-screen bg-neutral-50">
       <Navbar userRole="applicant" />
 
       <div className="flex justify-center w-full">
@@ -191,51 +191,51 @@ export default function ApplicantDashboard() {
               <motion.div 
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex-1 flex flex-col justify-center"
+                className="bg-white card p-6 flex-1 flex flex-col justify-center"
               >
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                   <div>
-                    <h2 className="text-2xl font-bold text-bmi-navy mb-1">Dashboard Pelamar</h2>
-                    <p className="text-slate-500 text-sm">{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    <h2 className="text-2xl font-bold text-neutral-900 mb-1">Dashboard Pelamar</h2>
+                    <p className="text-neutral-500 text-sm">{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
                   </div>
-                  <div className="w-full sm:w-48 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                  <div className="bg-gradient-to-r from-success/10 to-success/5 p-3 rounded-xl border border-success/20">
                     <div className="flex justify-between text-xs mb-2">
-                      <span className="font-semibold text-slate-600">Kelengkapan Profil</span>
-                      <span className="font-bold text-bmi-blue">{completeness}%</span>
+                      <span className="font-semibold text-neutral-600">Kelengkapan Profil</span>
+                      <span className="font-bold text-primary">{completeness}%</span>
                     </div>
-                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-neutral-200 rounded-full overflow-hidden">
                       <motion.div 
                         initial={{ width: 0 }}
                         animate={{ width: `${completeness}%` }}
                         transition={{ duration: 1, delay: 0.5 }}
-                        className={`h-full rounded-full ${completeness >= 100 ? 'bg-green-500' : 'bg-bmi-blue'}`}
+                        className={`h-full rounded-full ${completeness >= 100 ? 'bg-success' : 'bg-primary'}`}
                       />
                     </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-5 rounded-xl bg-bmi-soft/50 border border-slate-100">
-                  <div className="w-16 h-16 rounded-full bg-white border-2 border-white shadow-sm overflow-hidden shrink-0">
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-5 rounded-xl bg-primary/5 border border-primary/10">
+                  <div className="w-16 h-16 rounded-full bg-white border-2 border-primary shadow-base overflow-hidden shrink-0">
                     {profile?.photo ? (
                       <img src={`http://127.0.0.1:8000/storage/${profile.photo}`} alt="Profile" className="w-full h-full object-cover" />
                     ) : (
-                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400"><User size={28} /></div>
+                      <div className="w-full h-full bg-neutral-100 flex items-center justify-center text-neutral-400"><User size={28} /></div>
                     )}
                   </div>
                   <div className="text-center sm:text-left flex-1">
-                    <h3 className="font-bold text-slate-800 text-lg mb-1">{profile?.full_name || 'Nama Belum Diatur'}</h3>
-                    <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-2 text-sm text-slate-600">
-                      <span className="flex items-center gap-1.5"><GraduationCap size={15} className="text-slate-400"/> {profile?.last_education || 'Pendidikan belum diatur'}</span>
-                      <span className="flex items-center gap-1.5"><MapPin size={15} className="text-slate-400"/> {profile?.city ? `${profile.city}, ${profile.province}` : 'Lokasi belum diatur'}</span>
+                    <h3 className="font-bold text-neutral-900 text-lg mb-1">{profile?.full_name || 'Nama Belum Diatur'}</h3>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-2 text-sm text-neutral-600">
+                      <span className="flex items-center gap-1.5"><GraduationCap size={15} className="text-neutral-400"/> {profile?.last_education || 'Pendidikan belum diatur'}</span>
+                      <span className="flex items-center gap-1.5"><MapPin size={15} className="text-neutral-400"/> {profile?.city ? `${profile.city}, ${profile.province}` : 'Lokasi belum diatur'}</span>
                     </div>
                   </div>
                   <div className="shrink-0 mt-2 sm:mt-0">
                     {completeness >= 100 ? (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-green-100 text-green-700 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-success/10 text-success rounded-full">
                         <CheckCircle size={14} /> Profil Lengkap
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-warning/10 text-warning rounded-full">
                         <Clock size={14} /> Belum Lengkap
                       </span>
                     )}
