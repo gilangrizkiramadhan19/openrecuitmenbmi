@@ -1,14 +1,13 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, ArrowRight, Briefcase, Users, TrendingUp, Award, AlertCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
-
 import Navbar from '../../components/Navbar';
 import Button from '../../components/Button';
-import InputField from '../../components/forms/InputField';
+import Alert from '../../components/Alert';
 import api from '../../axios';
 
 const schema = yup.object().shape({
@@ -20,10 +19,15 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  const { register, handleSubmit, formState: { errors } } = useForm({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm({
     resolver: yupResolver(schema),
-    mode: 'onTouched'
+    mode: 'onTouched',
   });
 
   const onSubmit = async (data) => {
@@ -31,13 +35,10 @@ export default function LoginPage() {
     setServerError('');
     try {
       const response = await api.post('/login', data);
-      // Store token
       localStorage.setItem('token', response.data.token);
       if (response.data.user) {
         localStorage.setItem('user', JSON.stringify(response.data.user));
       }
-      
-      // Redirect to applicant dashboard (interceptor handles further redirects if needed)
       navigate('/dashboard/applicant');
     } catch (error) {
       setServerError(
@@ -49,130 +50,225 @@ export default function LoginPage() {
   };
 
   const containerVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.8, ease: 'easeOut' } },
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.6 } },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 10 },
-    visible: (custom) => ({ opacity: 1, y: 0, transition: { delay: custom * 0.1, duration: 0.6 } }),
+    visible: (custom) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: custom * 0.1, duration: 0.5 },
+    }),
   };
 
-  const features = [
-    { icon: Briefcase, label: 'Lowongan Terbaru', value: '50+' },
-    { icon: Users, label: 'Pelamar Aktif', value: '5K+' },
-    { icon: TrendingUp, label: 'Tingkat Keberhasilan', value: '85%' },
-    { icon: Award, label: 'Perusahaan Terpercaya', value: 'BMI' },
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bmi-navy via-bmi-blue to-bmi-soft">
-      <Navbar showAuth={false} />
+    <div className="min-h-screen bg-neutral-50">
+      <Navbar />
 
-      <div className="relative min-h-[calc(100vh-64px)] py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Background Wave */}
+      <div className="relative min-h-[calc(100vh-80px)] flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 overflow-hidden">
+        {/* Animated background elements */}
         <div className="absolute inset-0 -z-10">
-          <svg className="absolute top-0 left-0 w-full opacity-10" viewBox="0 0 1440 320" preserveAspectRatio="none">
-            <path fill="currentColor" d="M0,96L48,112C96,128,192,160,288,160C384,160,480,128,576,122.7C672,117,768,139,864,144C960,149,1056,139,1152,138.7C1248,139,1344,149,1392,154.7L1440,160L1440,0L1392,0C1344,0,1248,0,1152,0C1056,0,960,0,864,0C768,0,672,0,576,0C480,0,384,0,288,0C192,0,96,0,48,0L0,0Z" />
-          </svg>
+          <div className="absolute top-20 right-1/4 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 left-1/4 w-96 h-96 bg-cyan/5 rounded-full blur-3xl" />
         </div>
 
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-center">
-            {/* Left Content */}
-            <motion.div variants={containerVariants} initial="hidden" animate="visible" className="text-white z-10">
-              <motion.img custom={0} variants={itemVariants} src="/logo-bmi.png" alt="BMI Logo" className="h-12 w-auto mb-6" />
-              <motion.h1 custom={1} variants={itemVariants} className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
-                Mulai Karir Impian Anda
-              </motion.h1>
-              <motion.p custom={2} variants={itemVariants} className="text-white/80 text-lg mb-8 leading-relaxed">
-                Bergabunglah dengan ribuan profesional yang telah menemukan peluang karir terbaik mereka bersama PT Bumi Menara Internusa.
-              </motion.p>
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.6, duration: 0.8 }} className="grid grid-cols-2 gap-4">
-                {features.map((feature, idx) => {
-                  const Icon = feature.icon;
-                  return (
-                    <div key={idx} className="bg-white/10 backdrop-blur-md rounded-2xl p-4 border border-white/20">
-                      <Icon size={24} className="mb-2 text-bmi-cyan" />
-                      <p className="text-sm text-white/80 mb-1">{feature.label}</p>
-                      <p className="text-2xl font-bold text-white">{feature.value}</p>
-                    </div>
-                  );
-                })}
-              </motion.div>
-            </motion.div>
-
-            {/* Right - Login Card */}
-            <motion.div className="lg:sticky lg:top-1/2 lg:-translate-y-1/2" variants={containerVariants} initial="hidden" animate="visible">
-              <div className="bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100">
-                <div className="bg-gradient-to-r from-bmi-navy to-bmi-blue p-8 text-white relative">
-                  <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
-                  <h2 className="text-3xl font-bold relative z-10">Masuk ke Akun</h2>
-                  <p className="text-white/80 text-sm mt-2 relative z-10">Selamat datang kembali! Silakan masukkan email dan sandi.</p>
-                </div>
-
-                <div className="p-8">
-                  {serverError && (
-                    <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl text-sm font-medium flex items-center gap-2">
-                      <AlertCircle size={18} />
-                      {serverError}
-                    </div>
-                  )}
-
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                    <InputField
-                      label="Alamat Email"
-                      icon={Mail}
-                      type="email"
-                      placeholder="nama@email.com"
-                      {...register('email')}
-                      error={errors.email?.message}
-                      required
-                    />
-                    
-                    <InputField
-                      label="Kata Sandi"
-                      icon={Lock}
-                      type="password"
-                      placeholder="••••••••"
-                      {...register('password')}
-                      error={errors.password?.message}
-                      required
-                    />
-
-                    <div className="flex items-center justify-between pt-2">
-                      <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="checkbox" className="w-4 h-4 rounded border-slate-300 text-bmi-navy focus:ring-bmi-navy" />
-                        <span className="text-sm text-slate-700 font-medium">Ingat saya</span>
-                      </label>
-                      <a href="#" className="text-sm text-bmi-blue hover:text-bmi-navy font-bold transition-colors">
-                        Lupa kata sandi?
-                      </a>
-                    </div>
-
-                    <div className="pt-4">
-                      <Button type="submit" size="lg" disabled={loading} className="w-full justify-center shadow-lg shadow-bmi-blue/20">
-                        {loading ? 'Sedang Memeriksa...' : 'Masuk Sekarang'}
-                      </Button>
-                    </div>
-                  </form>
-
-                  <div className="relative my-8">
-                    <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-slate-200" /></div>
-                    <div className="relative flex justify-center"><span className="px-4 bg-white text-slate-500 text-sm font-medium">Atau</span></div>
-                  </div>
-
-                  <p className="text-center text-sm text-slate-600 font-medium">
-                    Belum memiliki akun?{' '}
-                    <Link to="/register" className="text-bmi-blue font-bold hover:text-bmi-navy transition-colors">
-                      Daftar Karir
-                    </Link>
-                  </p>
-                </div>
+        <motion.div
+          className="w-full max-w-md"
+          initial="hidden"
+          animate="visible"
+          variants={containerVariants}
+        >
+          {/* Form Card */}
+          <motion.div
+            className="glass rounded-2xl p-8 md:p-10 border border-white/40 shadow-glass"
+            whileHover={{ boxShadow: '0 8px 32px rgba(31, 41, 55, 0.15)' }}
+            transition={{ duration: 0.3 }}
+          >
+            {/* Header */}
+            <motion.div
+              className="text-center mb-8"
+              variants={itemVariants}
+              custom={0}
+            >
+              <div className="inline-block p-3 bg-primary/10 rounded-lg mb-4">
+                <Lock className="w-6 h-6 text-primary" />
               </div>
+              <h1 className="text-3xl font-bold text-neutral-900 mb-2">
+                Masuk ke Akun Anda
+              </h1>
+              <p className="text-neutral-600">
+                Lanjutkan perjalanan karir Anda bersama BMI
+              </p>
             </motion.div>
-          </div>
-        </div>
+
+            {/* Server Error Alert */}
+            {serverError && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mb-6"
+              >
+                <Alert
+                  type="error"
+                  message={serverError}
+                  dismissible
+                  onDismiss={() => setServerError('')}
+                />
+              </motion.div>
+            )}
+
+            {/* Form */}
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+              {/* Email Field */}
+              <motion.div variants={itemVariants} custom={1}>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">
+                  Email Address
+                </label>
+                <div className="relative group">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-primary transition" />
+                  <input
+                    type="email"
+                    placeholder="your@email.com"
+                    {...register('email')}
+                    className="w-full pl-12 pr-4 py-3 bg-white/50 border border-neutral-200 rounded-lg focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-neutral-400"
+                  />
+                </div>
+                {errors.email && (
+                  <p className="text-sm text-error mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.email.message}
+                  </p>
+                )}
+              </motion.div>
+
+              {/* Password Field */}
+              <motion.div variants={itemVariants} custom={2}>
+                <label className="block text-sm font-semibold text-neutral-900 mb-2">
+                  Kata Sandi
+                </label>
+                <div className="relative group">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-neutral-400 group-focus-within:text-primary transition" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    {...register('password')}
+                    className="w-full pl-12 pr-12 py-3 bg-white/50 border border-neutral-200 rounded-lg focus:bg-white focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all placeholder:text-neutral-400"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-primary transition"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
+                  </button>
+                </div>
+                {errors.password && (
+                  <p className="text-sm text-error mt-2 flex items-center gap-1">
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.password.message}
+                  </p>
+                )}
+              </motion.div>
+
+              {/* Remember Me & Forgot Password */}
+              <motion.div
+                variants={itemVariants}
+                custom={3}
+                className="flex items-center justify-between text-sm"
+              >
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" className="w-4 h-4 rounded border-neutral-300" />
+                  <span className="text-neutral-600">Ingat saya</span>
+                </label>
+                <Link
+                  to="#"
+                  className="text-primary hover:text-primary-600 font-medium transition"
+                >
+                  Lupa password?
+                </Link>
+              </motion.div>
+
+              {/* Submit Button */}
+              <motion.div variants={itemVariants} custom={4} className="pt-4">
+                <Button
+                  type="submit"
+                  fullWidth
+                  size="lg"
+                  isLoading={loading}
+                  disabled={loading}
+                  icon={ArrowRight}
+                  iconPosition="right"
+                >
+                  Masuk
+                </Button>
+              </motion.div>
+
+              {/* Divider */}
+              <motion.div variants={itemVariants} custom={5} className="relative py-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-neutral-200"></div>
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="px-3 text-neutral-500 bg-white/60">
+                    Belum punya akun?
+                  </span>
+                </div>
+              </motion.div>
+
+              {/* Register Link */}
+              <motion.div variants={itemVariants} custom={6}>
+                <Link to="/register" className="w-full block">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    fullWidth
+                    size="lg"
+                  >
+                    Daftar Sekarang
+                  </Button>
+                </Link>
+              </motion.div>
+            </form>
+
+            {/* HR Login Link */}
+            <motion.div
+              variants={itemVariants}
+              custom={7}
+              className="mt-8 pt-6 border-t border-neutral-200 text-center"
+            >
+              <p className="text-sm text-neutral-600 mb-3">
+                Anda HR dari BMI?
+              </p>
+              <Link
+                to="/login/hrd"
+                className="inline-block text-sm font-semibold text-primary hover:text-primary-600 transition"
+              >
+                Masuk sebagai HRD →
+              </Link>
+            </motion.div>
+          </motion.div>
+
+          {/* Footer Info */}
+          <motion.div
+            variants={itemVariants}
+            custom={8}
+            className="mt-8 text-center text-sm text-neutral-600"
+          >
+            <p>
+              Dengan masuk, Anda setuju dengan{' '}
+              <a href="#" className="text-primary hover:underline">
+                Syarat & Ketentuan
+              </a>
+              {' '}kami
+            </p>
+          </motion.div>
+        </motion.div>
       </div>
     </div>
   );
