@@ -1,48 +1,71 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   FileText,
   Calendar,
-  Bell,
   Menu,
   TrendingUp,
   CheckCircle,
   Clock,
-  AlertCircle,
   ChevronRight,
   Briefcase,
-  Eye,
-  Download,
-  X,
   GraduationCap,
   MapPin,
-  User
+  User,
+  Eye,
+  X,
+  Edit3,
+  ArrowRight,
+  Sparkles,
+  XCircle
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import api from '../../axios';
+import AnimatedCounter from '../../animations/AnimatedCounter';
+import { SkeletonStatCard, SkeletonCard } from '../../animations/Skeleton';
+import { fadeInUp, staggerContainer } from '../../animations/variants';
 
 export default function ApplicantDashboard() {
   const navigate = useNavigate();
-  const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [selectedApplication, setSelectedApplication] = useState(null);
   const [profile, setProfile] = useState(null);
-  const [notifications, setNotifications] = useState([
-    { id: 1, message: 'Interview dijadwalkan untuk Senior Frontend Developer', time: '2 jam lalu', read: false },
-    { id: 2, message: 'Lamaran Anda untuk Product Manager masuk tahap review', time: '1 hari lalu', read: false },
-    { id: 3, message: 'Penawaran kerja diterima untuk Data Scientist', time: '3 hari lalu', read: true },
-  ]);
 
-  const stats = [
-    { label: 'Lamaran Aktif', value: '12', icon: FileText, color: 'from-blue-600 to-blue-700' },
-    { label: 'Interview Terjadwal', value: '2', icon: Calendar, color: 'from-emerald-600 to-emerald-700' },
-    { label: 'Profile Views', value: '48', icon: Eye, color: 'from-purple-600 to-purple-700' },
-    { label: 'Ditawarkan', value: '1', icon: CheckCircle, color: 'from-amber-600 to-amber-700' },
-  ];
+
+
 
   const [latestJobs, setLatestJobs] = useState([]);
   const [myApps, setMyApps] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // Welcome banner state
+  const [showWelcome, setShowWelcome] = useState(() => {
+    return !localStorage.getItem('hasSeenWelcomeBanner');
+  });
+
+  // Auto-hide welcome banner
+  useEffect(() => {
+    if (showWelcome) {
+      const timer = setTimeout(() => {
+        setShowWelcome(false);
+        localStorage.setItem('hasSeenWelcomeBanner', 'true');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [showWelcome]);
+
+  // Calculate profile completeness
+  const getProfileCompleteness = () => {
+    if (!profile) return 0;
+    const fields = [
+      'full_name', 'ktp_number', 'phone', 'birth_place', 'birth_date', 
+      'gender', 'religion', 'marital_status', 'address_ktp', 'province', 
+      'city', 'district', 'sub_district', 'postal_code', 'last_education'
+    ];
+    const filled = fields.filter(f => profile[f] && profile[f].toString().trim() !== '').length;
+    return Math.round((filled / fields.length) * 100);
+  };
+  const completeness = getProfileCompleteness();
+
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -79,26 +102,6 @@ export default function ApplicantDashboard() {
     fetchDashboardData();
   }, [navigate]);
 
-  const upcomingInterviews = [
-    {
-      id: 1,
-      jobTitle: 'Senior Frontend Developer',
-      date: '25 May 2024',
-      time: '10:00 AM',
-      type: 'Video Call',
-      interviewer: 'John Smith',
-      department: 'Technology',
-    },
-    {
-      id: 2,
-      jobTitle: 'Product Manager',
-      date: '28 May 2024',
-      time: '2:00 PM',
-      type: 'In-person',
-      interviewer: 'Sarah Johnson',
-      department: 'Product',
-    },
-  ];
 
   const getStatusColor = (status) => {
     const colors = {
@@ -124,155 +127,207 @@ export default function ApplicantDashboard() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-bmi-soft">
       <Navbar userRole="applicant" />
 
-      <div className="flex">
-        {/* Sidebar */}
-        <motion.div
-          initial={false}
-          animate={{ width: sidebarOpen ? 280 : 80 }}
-          className="bg-white border-r border-slate-200 hidden md:block transition-all duration-300 sticky top-16 h-[calc(100vh-64px)] overflow-y-auto"
-        >
-          <nav className="p-4 space-y-2">
-            {[
-              { icon: TrendingUp, label: 'Dashboard', href: '/dashboard/applicant' },
-              { icon: FileText, label: 'Riwayat Lamaran', href: '/dashboard/applications' },
-              { icon: User, label: 'Profil Saya', href: '/dashboard/profile' },
-            ].map((item, idx) => {
-              const Icon = item.icon;
-              return (
-                <motion.a
-                  key={idx}
-                  href={item.href}
-                  whileHover={{ x: 4 }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-700 hover:bg-bmi-soft transition-colors"
-                >
-                  <Icon size={20} />
-                  {sidebarOpen && <span className="text-sm font-medium">{item.label}</span>}
-                </motion.a>
-              );
-            })}
-          </nav>
-        </motion.div>
-
+      <div className="flex justify-center w-full">
         {/* Main Content */}
-        <div className="flex-1">
-          {/* Top Bar */}
-          <div className="bg-white border-b border-slate-200 sticky top-16 z-10 px-6 py-4 flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="md:hidden p-2 hover:bg-slate-100 rounded-lg transition"
-              >
-                <Menu size={24} />
-              </button>
-              <h1 className="text-2xl font-bold text-bmi-navy hidden sm:block">Dashboard Lamaran</h1>
-            </div>
-
-            {/* Notifications */}
-            <div className="relative group">
-              <button className="relative p-2 hover:bg-slate-100 rounded-lg transition">
-                <Bell size={20} />
-                {notifications.some(n => !n.read) && (
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-                )}
-              </button>
-
-              <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                <div className="p-4 border-b border-slate-200">
-                  <h3 className="font-semibold text-bmi-navy">Notifikasi</h3>
-                </div>
-                <div className="divide-y divide-slate-200 max-h-96 overflow-y-auto">
-                  {notifications.map(notif => (
-                    <div key={notif.id} className={`p-4 hover:bg-bmi-soft transition ${!notif.read ? 'bg-blue-50' : ''}`}>
-                      <p className="text-sm text-bmi-navy">{notif.message}</p>
-                      <p className="text-xs text-slate-500 mt-1">{notif.time}</p>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="flex-1 w-full">
 
           {/* Page Content */}
-          <div className="p-4 md:p-8 space-y-8">
-            {/* Welcome Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-r from-bmi-navy to-bmi-blue rounded-3xl p-8 text-white shadow-lg relative overflow-hidden"
-            >
-              <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10"></div>
-              <div className="relative z-10 flex flex-col md:flex-row items-center gap-6">
-                <div className="w-24 h-24 rounded-full bg-white/20 border-4 border-white/30 backdrop-blur-md flex items-center justify-center overflow-hidden shrink-0 shadow-xl">
-                  {profile?.photo ? (
-                    <img src={`http://127.0.0.1:8000/storage/${profile.photo}`} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={40} className="text-white" />
-                  )}
-                </div>
-                <div className="text-center md:text-left flex-1">
-                  <h2 className="text-3xl font-bold mb-2">
-                    Selamat Datang Kembali{profile ? `, ${profile.full_name}` : ''}!
-                  </h2>
-                  <div className="flex flex-wrap items-center justify-center md:justify-start gap-4 mt-3">
-                    <div className="flex items-center gap-1 text-white/90 bg-white/10 px-3 py-1 rounded-full text-sm">
-                      <GraduationCap size={16} />
-                      <span>{profile?.last_education || 'Pendidikan belum diatur'}</span>
+          <div className="p-4 md:p-8 space-y-8 max-w-7xl mx-auto">
+            
+            {/* Temporary Welcome Banner */}
+            <AnimatePresence>
+              {showWelcome && (
+                <motion.div
+                  initial={{ opacity: 0, y: -20, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: -20, scale: 0.95, transition: { duration: 0.3 } }}
+                  className="bg-gradient-to-r from-emerald-500 to-emerald-700 rounded-2xl p-4 md:p-6 text-white shadow-lg relative flex items-center justify-between"
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="bg-white/20 p-3 rounded-full hidden sm:block">
+                      <Sparkles size={24} className="text-white" />
                     </div>
-                    <div className="flex items-center gap-1 text-white/90 bg-white/10 px-3 py-1 rounded-full text-sm">
-                      <MapPin size={16} />
-                      <span>{profile?.city ? `${profile.city}, ${profile.province}` : 'Lokasi belum diatur'}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-green-300 bg-green-900/30 px-3 py-1 rounded-full text-sm font-medium border border-green-400/30">
-                      <CheckCircle size={16} />
-                      <span>Profil Lengkap</span>
+                    <div>
+                      <h3 className="font-bold text-lg md:text-xl">Selamat Datang{profile ? `, ${profile.full_name}` : ''}!</h3>
+                      <p className="text-white/90 text-sm md:text-base mt-1">Profil Anda sudah siap digunakan. Semoga sukses dalam melamar pekerjaan!</p>
                     </div>
                   </div>
-                </div>
-              </div>
-            </motion.div>
+                  <button 
+                    onClick={() => {
+                      setShowWelcome(false);
+                      localStorage.setItem('hasSeenWelcomeBanner', 'true');
+                    }}
+                    className="p-2 hover:bg-white/20 rounded-lg transition-colors ml-4 shrink-0"
+                  >
+                    <X size={20} />
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }} className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700">
-                    <FileText size={24} className="text-white" />
-                  </div>
+            {/* Rejection Banner */}
+            {myApps.some(app => app.status === 'rejected') && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-red-50 border border-red-200 rounded-2xl p-4 md:p-5 flex items-start sm:items-center gap-4 shadow-sm mb-6"
+              >
+                <div className="bg-red-100 p-2 rounded-full shrink-0">
+                  <XCircle size={24} className="text-red-600" />
                 </div>
-                <p className="text-slate-600 text-sm mb-1">Total Lamaran</p>
-                <p className="text-3xl font-bold text-bmi-navy">{myApps.length}</p>
+                <div>
+                  <h3 className="font-bold text-red-800 text-sm md:text-base">Pemberitahuan Status Lamaran</h3>
+                  <p className="text-red-600/90 text-xs md:text-sm mt-1">
+                    Mohon maaf, ada lamaran Anda yang berstatus <strong>Ditolak</strong>. Jangan berkecil hati, silakan eksplorasi lowongan lain yang sesuai dengan keahlian Anda!
+                  </p>
+                </div>
               </motion.div>
+            )}
+
+            {/* Dashboard Overview Section */}
+            <div className="flex flex-col lg:flex-row gap-6 items-stretch">
               
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 rounded-lg bg-gradient-to-br from-yellow-500 to-amber-600">
-                    <Clock size={24} className="text-white" />
+              {/* Header & Quick Profile */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex-1 flex flex-col justify-center"
+              >
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                  <div>
+                    <h2 className="text-2xl font-bold text-bmi-navy mb-1">Dashboard Pelamar</h2>
+                    <p className="text-slate-500 text-sm">{new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  </div>
+                  <div className="w-full sm:w-48 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                    <div className="flex justify-between text-xs mb-2">
+                      <span className="font-semibold text-slate-600">Kelengkapan Profil</span>
+                      <span className="font-bold text-bmi-blue">{completeness}%</span>
+                    </div>
+                    <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${completeness}%` }}
+                        transition={{ duration: 1, delay: 0.5 }}
+                        className={`h-full rounded-full ${completeness >= 100 ? 'bg-green-500' : 'bg-bmi-blue'}`}
+                      />
+                    </div>
                   </div>
                 </div>
-                <p className="text-slate-600 text-sm mb-1">Menunggu Review</p>
-                <p className="text-3xl font-bold text-bmi-navy">{myApps.filter(a => a.status === 'pending').length}</p>
+
+                <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5 p-5 rounded-xl bg-bmi-soft/50 border border-slate-100">
+                  <div className="w-16 h-16 rounded-full bg-white border-2 border-white shadow-sm overflow-hidden shrink-0">
+                    {profile?.photo ? (
+                      <img src={`http://127.0.0.1:8000/storage/${profile.photo}`} alt="Profile" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-400"><User size={28} /></div>
+                    )}
+                  </div>
+                  <div className="text-center sm:text-left flex-1">
+                    <h3 className="font-bold text-slate-800 text-lg mb-1">{profile?.full_name || 'Nama Belum Diatur'}</h3>
+                    <div className="flex flex-wrap justify-center sm:justify-start gap-x-4 gap-y-2 text-sm text-slate-600">
+                      <span className="flex items-center gap-1.5"><GraduationCap size={15} className="text-slate-400"/> {profile?.last_education || 'Pendidikan belum diatur'}</span>
+                      <span className="flex items-center gap-1.5"><MapPin size={15} className="text-slate-400"/> {profile?.city ? `${profile.city}, ${profile.province}` : 'Lokasi belum diatur'}</span>
+                    </div>
+                  </div>
+                  <div className="shrink-0 mt-2 sm:mt-0">
+                    {completeness >= 100 ? (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-green-100 text-green-700 rounded-full">
+                        <CheckCircle size={14} /> Profil Lengkap
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 bg-amber-100 text-amber-700 rounded-full">
+                        <Clock size={14} /> Belum Lengkap
+                      </span>
+                    )}
+                  </div>
+                </div>
               </motion.div>
 
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 rounded-lg bg-gradient-to-br from-emerald-600 to-emerald-700">
-                    <Calendar size={24} className="text-white" />
-                  </div>
+              {/* Quick Action Buttons */}
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="bg-bmi-navy rounded-2xl shadow-sm p-6 lg:w-72 flex flex-col justify-center text-white relative overflow-hidden shrink-0"
+              >
+                <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5"></div>
+                <h3 className="font-semibold text-lg mb-4 relative z-10">Aksi Cepat</h3>
+                <div className="space-y-3 relative z-10">
+                  <button 
+                    onClick={() => navigate('/jobs')}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition-colors text-sm font-medium group"
+                  >
+                    <span className="flex items-center gap-2.5"><Briefcase size={18} className="text-blue-300" /> Cari Lowongan</span>
+                    <ArrowRight size={16} className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                  </button>
+                  <button 
+                    onClick={() => navigate('/dashboard/applications')}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-white/10 hover:bg-white/20 border border-white/10 rounded-xl transition-colors text-sm font-medium group"
+                  >
+                    <span className="flex items-center gap-2.5"><FileText size={18} className="text-blue-300" /> Lihat Lamaran</span>
+                    <ArrowRight size={16} className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                  </button>
+                  <button 
+                    onClick={() => navigate('/dashboard/profile')}
+                    className="w-full flex items-center justify-between px-4 py-3 bg-bmi-blue/80 hover:bg-bmi-blue border border-bmi-blue rounded-xl transition-colors text-sm font-medium group"
+                  >
+                    <span className="flex items-center gap-2.5"><Edit3 size={18} className="text-white" /> Edit Profil</span>
+                    <ArrowRight size={16} className="text-white/50 group-hover:text-white group-hover:translate-x-1 transition-all" />
+                  </button>
                 </div>
-                <p className="text-slate-600 text-sm mb-1">Tahap Interview</p>
-                <p className="text-3xl font-bold text-bmi-navy">{myApps.filter(a => a.status === 'interview').length}</p>
-              </motion.div>
-
-              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-white border border-slate-200 rounded-xl p-6 hover:shadow-lg transition-shadow">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="p-3 rounded-lg bg-gradient-to-br from-green-500 to-green-600">
-                    <CheckCircle size={24} className="text-white" />
-                  </div>
-                </div>
-                <p className="text-slate-600 text-sm mb-1">Diterima</p>
-                <p className="text-3xl font-bold text-bmi-navy">{myApps.filter(a => a.status === 'accepted').length}</p>
               </motion.div>
             </div>
+
+            {/* Compact Stats Grid */}
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              animate="visible"
+              className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4"
+            >
+              {loading ? (
+                <>
+                  <SkeletonStatCard />
+                  <SkeletonStatCard />
+                  <SkeletonStatCard />
+                  <SkeletonStatCard />
+                  <SkeletonStatCard />
+                </>
+              ) : (
+                <>
+                  {[
+                    { label: 'Total Lamaran', value: myApps.length, icon: FileText, color: 'text-blue-600', bg: 'bg-blue-50', border: 'border-blue-100', delay: 0 },
+                    { label: 'Review', value: myApps.filter(a => a.status === 'pending').length, icon: Clock, color: 'text-amber-600', bg: 'bg-amber-50', border: 'border-amber-100', delay: 100 },
+                    { label: 'Interview', value: myApps.filter(a => a.status === 'interview').length, icon: Calendar, color: 'text-emerald-600', bg: 'bg-emerald-50', border: 'border-emerald-100', delay: 200 },
+                    { label: 'Diterima', value: myApps.filter(a => a.status === 'accepted').length, icon: CheckCircle, color: 'text-green-600', bg: 'bg-green-50', border: 'border-green-100', delay: 300 },
+                    { label: 'Ditolak', value: myApps.filter(a => a.status === 'rejected').length, icon: XCircle, color: 'text-red-600', bg: 'bg-red-50', border: 'border-red-100', delay: 400 },
+                  ].map((stat) => {
+                    const Icon = stat.icon;
+                    return (
+                      <motion.div
+                        key={stat.label}
+                        variants={fadeInUp}
+                        whileHover={{ y: -2 }}
+                        className={`bg-white border rounded-2xl p-4 md:p-5 flex items-center gap-4 cursor-default transition-all shadow-sm hover:shadow-md ${stat.border}`}
+                      >
+                        <div className={`p-3 rounded-xl ${stat.bg} ${stat.color} shrink-0`}>
+                          <Icon size={20} />
+                        </div>
+                        <div>
+                          <AnimatedCounter
+                            value={stat.value}
+                            delay={stat.delay}
+                            duration={1400}
+                            className="text-xl md:text-2xl font-bold text-bmi-navy leading-none block mb-1"
+                          />
+                          <p className="text-slate-500 text-xs md:text-sm font-medium">{stat.label}</p>
+                        </div>
+                      </motion.div>
+                    );
+                  })}
+                </>
+              )}
+            </motion.div>
 
             {/* Two Column Layout */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -285,8 +340,8 @@ export default function ApplicantDashboard() {
               >
                 <div className="p-6 border-b border-slate-200 flex items-center justify-between">
                   <h3 className="text-xl font-bold text-bmi-navy flex items-center gap-2">
-                    <Briefcase size={24} />
-                    Lowongan Terbaru
+                    <Sparkles size={22} className="text-amber-500" />
+                    Rekomendasi Untuk Anda
                   </h3>
                   <a href="/jobs" className="text-blue-600 hover:text-blue-700 text-sm font-semibold flex items-center gap-1">
                     Lihat Semua Lowongan <ChevronRight size={16} />
@@ -329,7 +384,7 @@ export default function ApplicantDashboard() {
                 </div>
               </motion.div>
 
-              {/* Upcoming Interviews */}
+              {/* Upcoming Interviews - real data dari myApps */}
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -344,35 +399,61 @@ export default function ApplicantDashboard() {
                 </div>
 
                 <div className="divide-y divide-slate-200">
-                  {upcomingInterviews.length > 0 ? (
-                    upcomingInterviews.map((interview, idx) => (
+                  {loading ? (
+                    <div className="p-6 text-center text-slate-400 text-sm">Memuat...</div>
+                  ) : myApps.filter(a => a.status === 'interview' && (!a.interview_date || new Date(a.interview_date) >= new Date(new Date().setHours(0,0,0,0)))).length > 0 ? (
+                    myApps.filter(a => a.status === 'interview' && (!a.interview_date || new Date(a.interview_date) >= new Date(new Date().setHours(0,0,0,0)))).map((app, idx) => (
                       <motion.div
-                        key={interview.id}
+                        key={app.id}
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.4 + idx * 0.05 }}
-                        className="p-5 hover:bg-bmi-soft transition-colors"
+                        className="p-5 hover:bg-bmi-soft transition-colors cursor-pointer border-b border-slate-100 last:border-0"
                       >
-                        <h4 className="font-semibold text-bmi-navy text-sm mb-2">{interview.jobTitle}</h4>
-                        <div className="space-y-2 text-sm">
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <Calendar size={14} />
-                            {interview.date}
-                          </div>
-                          <div className="flex items-center gap-2 text-slate-600">
-                            <Clock size={14} />
-                            {interview.time}
-                          </div>
-                          <div className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-full w-fit">
-                            {interview.type}
-                          </div>
+                        <h4 className="font-semibold text-bmi-navy text-sm mb-2">{app.job?.title || 'Posisi Tidak Diketahui'}</h4>
+                        <div className="space-y-2 text-sm bg-slate-50 p-3 rounded-xl border border-slate-100">
+                          {app.interview_date ? (
+                            <>
+                              <div className="flex items-center gap-2">
+                                <Calendar size={14} className="text-emerald-500" />
+                                <span className="font-bold text-emerald-700">{new Date(app.interview_date).toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})} • {app.interview_time ? app.interview_time.substring(0,5) : ''} WIB</span>
+                              </div>
+                              <div className="flex items-start gap-2">
+                                <MapPin size={14} className="text-blue-500 shrink-0 mt-0.5" />
+                                <div className="text-slate-600">
+                                  <span className="font-semibold block text-blue-700">{app.interview_type}</span>
+                                  {app.interview_type === 'Online' && app.interview_location ? (
+                                    <a href={app.interview_location} target="_blank" rel="noreferrer" className="text-blue-500 underline text-xs break-all block mt-0.5">{app.interview_location}</a>
+                                  ) : (
+                                    <span className="text-xs break-words block mt-0.5">{app.interview_location}</span>
+                                  )}
+                                </div>
+                              </div>
+                              {app.interview_notes && (
+                                <div className="mt-2 pt-2 border-t border-slate-200 text-xs text-slate-500 italic">
+                                  "{app.interview_notes}"
+                                </div>
+                              )}
+                              {app.interview_type === 'Online' && app.interview_location && (
+                                <a href={app.interview_location} target="_blank" rel="noreferrer" className="mt-2 w-full inline-block text-center py-1.5 bg-blue-600 text-white rounded-lg text-xs font-bold hover:bg-blue-700 transition">Gabung Meeting</a>
+                              )}
+                            </>
+                          ) : (
+                            <div className="text-slate-500 text-xs py-1">
+                              <span className="font-semibold text-amber-600 block mb-1">Interview belum dijadwalkan.</span>
+                              HRD akan menghubungi Anda segera.
+                            </div>
+                          )}
                         </div>
                       </motion.div>
                     ))
                   ) : (
-                    <div className="p-8 text-center text-slate-500">
-                      <Calendar size={32} className="mx-auto mb-3 opacity-50" />
-                      <p>Belum ada interview yang dijadwalkan</p>
+                    <div className="p-10 text-center text-slate-500 flex flex-col items-center">
+                      <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mb-4">
+                        <Calendar size={28} className="text-slate-300" />
+                      </div>
+                      <p className="font-semibold text-slate-700 mb-1">Belum ada jadwal interview</p>
+                      <p className="text-sm text-slate-500 max-w-[200px]">HRD akan menghubungi Anda jika lolos tahap seleksi.</p>
                     </div>
                   )}
                 </div>
@@ -422,7 +503,7 @@ export default function ApplicantDashboard() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-slate-600">
-                            {new Date(app.applied_at).toLocaleDateString('id-ID')}
+                            {new Date(app.applied_at || app.created_at).toLocaleDateString('id-ID')}
                           </td>
                           <td className="px-6 py-4 text-center">
                             <motion.button

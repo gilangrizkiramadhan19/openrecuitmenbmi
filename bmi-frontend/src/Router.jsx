@@ -8,6 +8,7 @@ import LandingPage from "./pages/LandingPage";
 import LoginPage from "./pages/auth/LoginPage";
 import RegisterPage from "./pages/auth/RegisterPage";
 import JobsPage from "./pages/JobsPage";
+import JobDetailPage from "./pages/JobDetailPage";
 import ApplicantDashboard from "./pages/dashboard/ApplicantDashboard";
 import CompleteProfile from "./pages/dashboard/CompleteProfile";
 import Settings from "./pages/dashboard/Settings";
@@ -24,6 +25,7 @@ export default function AppRouter() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/jobs" element={<JobsPage />} />
+        <Route path="/jobs/:id" element={<JobDetailPage />} />
         <Route path="/complete-profile" element={<CompleteProfile />} />
         <Route path="/dashboard/profile" element={<CompleteProfile />} />
         <Route path="/dashboard/applicant" element={<ApplicantDashboard />} />

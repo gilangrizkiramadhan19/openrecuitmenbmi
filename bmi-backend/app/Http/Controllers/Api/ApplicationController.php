@@ -17,8 +17,8 @@ class ApplicationController extends Controller
     public function allApplicants()
     {
         try {
-            // Mengambil data lamaran beserta data User, Profil, dan Lowongannya
-            $applications = Application::with(['user.profile', 'job'])
+            // Mengambil data lamaran beserta data User, Profil, Pendidikan, Pengalaman, dan Lowongannya
+            $applications = Application::with(['user.profile', 'user.educationHistories', 'user.workExperiences', 'job'])
                 ->latest()
                 ->get();
 
@@ -42,13 +42,27 @@ class ApplicationController extends Controller
     public function updateStatus(Request $request, $id)
     {
         $request->validate([
-            'status' => 'required|in:pending,interview,accepted,rejected'
+            'status' => 'required|in:applied,pending,screening,interview,accepted,rejected',
+            'interview_date' => 'nullable|date',
+            'interview_time' => 'nullable|date_format:H:i',
+            'interview_type' => 'nullable|in:Online,Offline',
+            'interview_location' => 'nullable|string',
+            'interview_notes' => 'nullable|string',
         ]);
 
         $application = Application::findOrFail($id);
-        $application->update([
-            'status' => $request->status
-        ]);
+        
+        $updateData = ['status' => $request->status];
+
+        if ($request->status === 'interview') {
+            if ($request->has('interview_date')) $updateData['interview_date'] = $request->interview_date;
+            if ($request->has('interview_time')) $updateData['interview_time'] = $request->interview_time;
+            if ($request->has('interview_type')) $updateData['interview_type'] = $request->interview_type;
+            if ($request->has('interview_location')) $updateData['interview_location'] = $request->interview_location;
+            if ($request->has('interview_notes')) $updateData['interview_notes'] = $request->interview_notes;
+        }
+
+        $application->update($updateData);
 
         return response()->json([
             'success' => true,
@@ -80,7 +94,7 @@ class ApplicationController extends Controller
         $application = Application::create([
             'user_id' => $user->id,
             'job_id'  => $jobId,
-            'status'  => 'pending',
+            'status'  => 'applied',
             'applied_at' => now(),
         ]);
 

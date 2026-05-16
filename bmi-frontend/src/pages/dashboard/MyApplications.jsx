@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Briefcase, Calendar, MapPin, Search, Clock, CheckCircle, XCircle, AlertCircle } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Briefcase, Calendar, MapPin, Clock, CheckCircle, XCircle, AlertCircle, ChevronLeft } from 'lucide-react';
 import Navbar from '../../components/Navbar';
 import api from '../../axios';
 import { motion } from 'framer-motion';
+import { SkeletonCard } from '../../animations/Skeleton';
+import { staggerContainer, fadeInUp } from '../../animations/variants';
+
 
 export default function MyApplications() {
+  const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -46,9 +51,21 @@ export default function MyApplications() {
 
   return (
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
-      <Navbar showAuth={true} userRole="applicant" />
+      <Navbar showAuth={false} userRole="applicant" />
       
       <div className="max-w-5xl mx-auto px-4 py-12">
+        {/* Back Button */}
+        <motion.button
+          onClick={() => navigate('/dashboard/applicant')}
+          className="flex items-center gap-2 text-slate-500 hover:text-bmi-blue mb-6 transition-colors text-sm font-medium"
+          whileHover={{ x: -3 }}
+          initial={{ opacity: 0, x: -10 }}
+          animate={{ opacity: 1, x: 0 }}
+        >
+          <ChevronLeft size={18} />
+          Kembali ke Dashboard
+        </motion.button>
+
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-bmi-navy mb-2">Riwayat Lamaran Saya</h1>
           <p className="text-slate-500">Pantau status semua lowongan kerja yang telah Anda lamar di sini.</p>
@@ -62,13 +79,26 @@ export default function MyApplications() {
         )}
 
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-bmi-blue"></div>
-          </div>
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-4"
+          >
+            {[...Array(3)].map((_, i) => (
+              <motion.div key={i} variants={fadeInUp}>
+                <SkeletonCard />
+              </motion.div>
+            ))}
+          </motion.div>
         ) : applications.length === 0 ? (
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Briefcase size={32} className="text-slate-400" />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-2xl shadow-sm border border-slate-200 p-16 text-center"
+          >
+            <div className="animate-float inline-block mb-6">
+              <Briefcase size={56} className="text-slate-300" />
             </div>
             <h3 className="text-xl font-bold text-bmi-navy mb-2">Belum ada lamaran</h3>
             <p className="text-slate-500 mb-6 max-w-md mx-auto">
@@ -77,16 +107,20 @@ export default function MyApplications() {
             <a href="/jobs" className="inline-block px-6 py-2.5 bg-bmi-blue text-white rounded-lg font-medium hover:bg-bmi-navy transition-colors">
               Cari Lowongan
             </a>
-          </div>
+          </motion.div>
         ) : (
-          <div className="space-y-4">
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-4"
+          >
             {applications.map((app, idx) => (
               <motion.div 
                 key={app.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 hover:border-bmi-blue/30 transition-colors"
+                variants={fadeInUp}
+                whileHover={{ y: -2, boxShadow: '0 8px 24px rgba(0,56,150,0.08)' }}
+                className="bg-white rounded-2xl p-6 border border-slate-200 hover:border-bmi-blue/30 transition-all duration-200 will-animate"
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex-1">
@@ -95,26 +129,66 @@ export default function MyApplications() {
                       {getStatusBadge(app.status)}
                     </div>
                     
-                    <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-slate-500">
-                      <div className="flex items-center gap-1.5">
-                        <Briefcase size={16} />
-                        <span>{app.job?.department || '-'}</span>
+                    <div className="flex flex-col gap-3 mt-3 text-sm text-slate-500">
+                      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                        <div className="flex items-center gap-1.5">
+                          <Briefcase size={16} />
+                          <span>{app.job?.department || '-'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <MapPin size={16} />
+                          <span>{app.job?.location || '-'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5">
+                          <Calendar size={16} />
+                          <span>Tanggal Lamar: {formatDate(app.applied_at || app.created_at)}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
-                        <MapPin size={16} />
-                        <span>{app.job?.location || '-'}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <Calendar size={16} />
-                        <span>Melamar pada: {formatDate(app.applied_at)}</span>
-                      </div>
+
+                      {app.status === 'interview' && (
+                        <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl mt-2 w-full">
+                          <h4 className="font-bold text-bmi-navy mb-3 flex items-center gap-2 text-sm">
+                            <Calendar size={16} className="text-bmi-blue" /> Jadwal Interview
+                          </h4>
+                          {app.interview_date ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="block text-xs text-slate-500 font-semibold mb-1">TANGGAL & WAKTU</span>
+                                <span className="text-slate-700 font-medium">{formatDate(app.interview_date)} • {app.interview_time ? app.interview_time.substring(0,5) : ''} WIB</span>
+                              </div>
+                              <div>
+                                <span className="block text-xs text-slate-500 font-semibold mb-1">TIPE INTERVIEW</span>
+                                <span className="text-slate-700 font-medium">{app.interview_type}</span>
+                              </div>
+                              <div className="md:col-span-2">
+                                <span className="block text-xs text-slate-500 font-semibold mb-1">{app.interview_type === 'Online' ? 'LINK MEETING' : 'LOKASI'}</span>
+                                {app.interview_type === 'Online' && app.interview_location ? (
+                                  <a href={app.interview_location} target="_blank" rel="noreferrer" className="text-blue-600 underline font-medium break-all">{app.interview_location}</a>
+                                ) : (
+                                  <span className="text-slate-700 font-medium break-words">{app.interview_location || '-'}</span>
+                                )}
+                              </div>
+                              {app.interview_notes && (
+                                <div className="md:col-span-2 mt-2 pt-2 border-t border-blue-100/50">
+                                  <span className="block text-xs text-slate-500 font-semibold mb-1">CATATAN HRD</span>
+                                  <span className="text-slate-600 italic">"{app.interview_notes}"</span>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="text-amber-700 text-sm font-medium bg-amber-50 p-3 rounded-lg border border-amber-100">
+                              Interview belum dijadwalkan. HRD akan menghubungi Anda segera.
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                   
                   <div className="shrink-0">
                     <a 
                       href={`/jobs/${app.job_id}`}
-                      className="inline-flex items-center justify-center px-4 py-2 bg-slate-50 text-bmi-blue font-medium rounded-lg hover:bg-slate-100 transition-colors text-sm"
+                      className="inline-flex items-center justify-center px-4 py-2 bg-blue-50 text-bmi-blue font-medium rounded-lg hover:bg-bmi-blue hover:text-white transition-all duration-200 text-sm"
                     >
                       Lihat Lowongan
                     </a>
@@ -122,7 +196,7 @@ export default function MyApplications() {
                 </div>
               </motion.div>
             ))}
-          </div>
+          </motion.div>
         )}
       </div>
     </div>

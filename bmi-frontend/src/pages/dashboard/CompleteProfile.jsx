@@ -37,9 +37,9 @@ const schema = yup.object().shape({
     yup.object().shape({
       school_name: yup.string().required('Nama sekolah wajib diisi'),
       degree: yup.string().required('Gelar/Tingkat wajib diisi'),
-      major: yup.string().nullable(),
+      major: yup.string().required('Jurusan wajib diisi'),
       start_year: yup.string().required('Tahun masuk wajib diisi'),
-      end_year: yup.string().nullable()
+      end_year: yup.string().required('Tahun lulus wajib diisi')
     })
   ).min(1, 'Minimal 1 riwayat pendidikan wajib diisi'),
 
@@ -51,7 +51,7 @@ const schema = yup.object().shape({
         company_name: yup.string().required('Nama perusahaan wajib diisi'),
         position: yup.string().required('Posisi wajib diisi'),
         start_date: yup.date().typeError('Tanggal mulai wajib diisi').required(),
-        end_date: yup.date().nullable(),
+        end_date: yup.date().typeError('Tanggal selesai wajib diisi').required(),
         description: yup.string().nullable()
       })
     ),
@@ -245,7 +245,7 @@ export default function CompleteProfile() {
       await api.post('/profile', submitData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      navigate('/dashboard/applicant');
+      navigate('/jobs');
     } catch (err) {
       console.error(err);
       setServerError('Gagal menyimpan profil. Silakan periksa kembali isian Anda.');
@@ -347,10 +347,10 @@ export default function CompleteProfile() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <InputField label="Nama Institusi / Sekolah" {...register(`education.${index}.school_name`)} error={errors.education?.[index]?.school_name?.message} required />
                   <InputField label="Gelar / Tingkat" {...register(`education.${index}.degree`)} error={errors.education?.[index]?.degree?.message} required />
-                  <InputField label="Jurusan" {...register(`education.${index}.major`)} error={errors.education?.[index]?.major?.message} optional />
+                  <InputField label="Jurusan" {...register(`education.${index}.major`)} error={errors.education?.[index]?.major?.message} required />
                   <div className="grid grid-cols-2 gap-4">
                     <InputField label="Tahun Masuk" placeholder="YYYY" {...register(`education.${index}.start_year`)} error={errors.education?.[index]?.start_year?.message} required />
-                    <InputField label="Tahun Lulus" placeholder="YYYY" {...register(`education.${index}.end_year`)} error={errors.education?.[index]?.end_year?.message} optional />
+                    <InputField label="Tahun Lulus" placeholder="YYYY" {...register(`education.${index}.end_year`)} error={errors.education?.[index]?.end_year?.message} required />
                   </div>
                 </div>
               </div>
@@ -377,7 +377,7 @@ export default function CompleteProfile() {
                       <InputField label="Nama Perusahaan" {...register(`work.${index}.company_name`)} error={errors.work?.[index]?.company_name?.message} required />
                       <InputField label="Posisi / Jabatan" {...register(`work.${index}.position`)} error={errors.work?.[index]?.position?.message} required />
                       <InputField label="Tanggal Mulai" type="date" {...register(`work.${index}.start_date`)} error={errors.work?.[index]?.start_date?.message} required />
-                      <InputField label="Tanggal Selesai" type="date" helperText="Kosongkan jika masih bekerja di sini" {...register(`work.${index}.end_date`)} error={errors.work?.[index]?.end_date?.message} optional />
+                      <InputField label="Tanggal Selesai" type="date" {...register(`work.${index}.end_date`)} error={errors.work?.[index]?.end_date?.message} required />
                       <div className="md:col-span-2">
                         <TextAreaField label="Deskripsi Pekerjaan" rows={3} {...register(`work.${index}.description`)} error={errors.work?.[index]?.description?.message} optional />
                       </div>
