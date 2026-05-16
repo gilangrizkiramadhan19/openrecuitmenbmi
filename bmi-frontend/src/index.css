@@ -526,3 +526,252 @@ select.input-interactive:focus {
     transform: translateY(0);
   }
 }
+
+/* ========================================
+   RESPONSIVE MOBILE OPTIMIZATIONS
+   ======================================== */
+
+/* Mobile-first approach */
+@media (max-width: 640px) {
+  /* Larger touch targets on mobile */
+  button, a, input[type="button"], input[type="submit"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Reduce font sizes on small screens */
+  h1 { font-size: 28px; }
+  h2 { font-size: 24px; }
+  h3 { font-size: 20px; }
+  
+  /* More padding for mobile */
+  .card {
+    padding: 16px;
+  }
+
+  /* Stack layouts on mobile */
+  .flex-row-mobile {
+    flex-direction: column;
+  }
+  
+  /* Reduce gap on mobile */
+  .gap-auto {
+    gap: 12px;
+  }
+}
+
+/* Tablet optimizations */
+@media (min-width: 640px) and (max-width: 1024px) {
+  /* Medium touch targets */
+  button, a {
+    min-height: 40px;
+  }
+
+  /* Balanced spacing */
+  .card {
+    padding: 20px;
+  }
+}
+
+/* Desktop-specific optimizations */
+@media (min-width: 1024px) {
+  /* Hover effects only on desktop */
+  .hover-lift {
+    transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-4px);
+  }
+
+  /* Enhanced shadows on desktop */
+  .card {
+    padding: 24px;
+  }
+}
+
+/* Landscape mode adjustments */
+@media (orientation: landscape) and (max-height: 500px) {
+  h1, h2 { margin: 8px 0; }
+  .card { padding: 12px; }
+}
+
+/* High DPI screens (Retina) */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+  /* Enable better antialiasing */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Dark mode support (if implemented) */
+@media (prefers-color-scheme: dark) {
+  /* Can add dark mode styles here later */
+}
+
+/* Print styles */
+@media print {
+  body {
+    background: white;
+    color: #000;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+  
+  a {
+    text-decoration: underline;
+  }
+}
+
+/* ========================================
+   PERFORMANCE OPTIMIZATIONS
+   ======================================== */
+
+/* Reduce paint operations */
+.will-change-transform {
+  will-change: transform;
+}
+
+.will-change-opacity {
+  will-change: opacity;
+}
+
+/* Optimize scrolling performance */
+.scroll-smooth {
+  scroll-behavior: smooth;
+}
+
+/* Use CSS containment for performance */
+.contain-layout {
+  contain: layout;
+}
+
+.contain-paint {
+  contain: paint;
+}
+
+.contain-strict {
+  contain: strict;
+}
+
+/* Efficient font loading */
+@font-face {
+  font-family: 'Inter';
+  font-display: swap;
+}
+
+/* Optimize images */
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Efficient grid rendering */
+.virtual-scroll {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+/* ========================================
+   FINAL POLISH & REFINEMENTS
+   ======================================== */
+
+/* Smooth text selection */
+::selection {
+  background-color: rgba(0, 86, 179, 0.2);
+  color: inherit;
+}
+
+::-moz-selection {
+  background-color: rgba(0, 86, 179, 0.2);
+  color: inherit;
+}
+
+/* Improve form focus states */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid #0056B3;
+  outline-offset: 2px;
+}
+
+/* Scrollbar styling (WebKit browsers) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Cursor improvements */
+button, a, [role="button"] {
+  cursor: pointer;
+}
+
+[disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Better line breaks */
+h1, h2, h3, h4, h5, h6 {
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Consistent form styling */
+input, textarea, select {
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* Better list styling */
+ul, ol {
+  margin: 1em 0;
+  padding-left: 2em;
+}
+
+li {
+  margin: 0.5em 0;
+}
+
+/* Code block styling */
+code, pre {
+  background-color: #f1f5f9;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Courier New', monospace;
+  font-size: 0.9em;
+  padding: 2px 6px;
+}
+
+pre {
+  padding: 12px;
+  overflow-x: auto;
+}
